@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 
 $Script:WinGetExe = 'winget'
-$Script:AppVersion = '1.0.0'
+$Script:AppVersion = '0.2.0'
 
 # ---------------------------------------------------------------------------
 # Initialisatie
@@ -302,32 +302,142 @@ function Get-LatestAppVersion {
     param([string]$Url)
     if (-not $Url) { return $null }
     try {
-        $data = Invoke-RestMethod -Uri $Url -TimeoutSec 10
-        return $data.version
+        $data = Invoke-RestMethod -Uri $Url -TimeoutSec 15 -Headers @{
+            'User-Agent' = "WinGetManager/$Script:AppVersion"
+            'Accept'     = 'application/vnd.github+json'
+        }
+        $version = ($data.tag_name -replace '^v','').Trim()
+        return [PSCustomObject]@{
+            Version    = $version
+            TagName    = $data.tag_name
+            Name       = $data.name
+            Body       = $data.body
+            Url        = $data.html_url
+            Assets     = @($data.assets | ForEach-Object {
+                [PSCustomObject]@{
+                    Name = $_.name
+                    Url  = $_.browser_download_url
+                    Size = $_.size
+                }
+            })
+        }
     } catch {
         Write-Log "Versiecheck mislukt: $_" -Level WARN -Source WinGetCore
         return $null
     }
 }
 
+function Test-TrustedUpdateUrl {
+    param([string]$Url)
+    if (-not $Url) { return $false }
+    try {
+        $uri = [System.Uri]$Url
+        if ($uri.Scheme -ne 'https') { return $false }
+        # Whitelist GitHub-hosts: api.github.com (releases API) en github.com (download URLs)
+        return ($uri.Host -in @('api.github.com', 'github.com', 'objects.githubusercontent.com'))
+    } catch { return $false }
+}
+
+function Test-PEFile {
+    param([string]$Path)
+    try {
+        $bytes = [System.IO.File]::ReadAllBytes($Path) | Select-Object -First 64
+        # PE-bestand begint met "MZ" (0x4D 0x5A)
+        return ($bytes[0] -eq 0x4D -and $bytes[1] -eq 0x5A)
+    } catch { return $false }
+}
+
 function Update-App {
     param(
-        [string]$Url,
-        [scriptblock]$OnProgress
+        [Parameter(Mandatory)][string]$Url,
+        [scriptblock]$OnProgress,
+        [string]$ExePath,
+        [string]$AssetName = 'WinGetManager.exe'
     )
 
-    $latest = Get-LatestAppVersion -Url $Url
-    if (-not $latest) { return $false }
-
-    if ([version]$latest -le [version]$Script:AppVersion) {
-        Write-Log "App is al up-to-date (v$Script:AppVersion)" -Source WinGetCore
-        return $false
+    # Security: weiger non-HTTPS of niet-vertrouwde hosts
+    if (-not (Test-TrustedUpdateUrl $Url)) {
+        Write-Log "Update geweigerd - URL niet vertrouwd: $Url" -Level WARN -Source WinGetCore
+        return [PSCustomObject]@{ Updated = $false; Reason = 'untrusted_url' }
     }
 
-    Write-Log "Nieuwe versie beschikbaar: v$latest (huidig: v$Script:AppVersion)" -Source WinGetCore
-    # Hier zou je het nieuwe pakket downloaden en vervangen
-    # Implementatie afhankelijk van distributie-methode (GitHub releases, etc.)
-    return $true
+    $info = Get-LatestAppVersion -Url $Url
+    if (-not $info -or -not $info.Version) {
+        return [PSCustomObject]@{ Updated = $false; Reason = 'no_response' }
+    }
+
+    try {
+        $latestVer  = [version]$info.Version
+        $currentVer = [version]$Script:AppVersion
+    } catch {
+        return [PSCustomObject]@{ Updated = $false; Reason = 'invalid_version'; Latest = $info.Version }
+    }
+
+    if ($latestVer -le $currentVer) {
+        return [PSCustomObject]@{
+            Updated = $false; Reason = 'up_to_date'
+            Current = $Script:AppVersion; Latest = $info.Version
+        }
+    }
+
+    # Vind het juiste asset
+    $exeAsset = $info.Assets | Where-Object { $_.Name -eq $AssetName } | Select-Object -First 1
+    if (-not $exeAsset) {
+        return [PSCustomObject]@{ Updated = $false; Reason = 'no_asset'; Latest = $info.Version }
+    }
+
+    # Pad naar huidige exe (alleen werkt voor PS2EXE bundels - .ps1 niet vervangbaar)
+    if (-not $ExePath) {
+        try { $ExePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName } catch {}
+    }
+    if (-not $ExePath -or $ExePath -notmatch '\.exe$') {
+        return [PSCustomObject]@{ Updated = $false; Reason = 'not_exe_runtime'; Latest = $info.Version }
+    }
+
+    # Download naar tijdelijk bestand naast huidige exe
+    $tempExe = "$ExePath.new"
+    try {
+        if ($OnProgress) { & $OnProgress 'download' $info.Version }
+        Invoke-WebRequest -Uri $exeAsset.Url -OutFile $tempExe -UseBasicParsing -TimeoutSec 120
+    } catch {
+        Write-Log "Download mislukt: $_" -Level ERROR -Source WinGetCore
+        return [PSCustomObject]@{ Updated = $false; Reason = 'download_failed'; Latest = $info.Version }
+    }
+
+    # Verifieer dat download geslaagd is en het een echte PE/EXE is
+    if (-not (Test-Path $tempExe) -or (Get-Item $tempExe).Length -lt 50KB) {
+        Remove-Item $tempExe -Force -ErrorAction SilentlyContinue
+        return [PSCustomObject]@{ Updated = $false; Reason = 'corrupt_download'; Latest = $info.Version }
+    }
+    if (-not (Test-PEFile $tempExe)) {
+        Remove-Item $tempExe -Force -ErrorAction SilentlyContinue
+        Write-Log "Download is geen geldige .exe (PE-header ontbreekt)" -Level ERROR -Source WinGetCore
+        return [PSCustomObject]@{ Updated = $false; Reason = 'invalid_exe'; Latest = $info.Version }
+    }
+
+    Write-Log "Download geslaagd ($([math]::Round((Get-Item $tempExe).Length/1KB,1)) KB), wisselen exe..." -Source WinGetCore
+
+    # Maak een replace-batch die de huidige exe vervangt zodra deze stopt
+    $batPath = Join-Path $env:TEMP "WinGetManager-Update-$(Get-Date -Format 'yyyyMMddHHmmss').bat"
+    $bat = @"
+@echo off
+:loop
+ping -n 2 127.0.0.1 >nul
+del "$ExePath" 2>nul
+if exist "$ExePath" goto loop
+move /Y "$tempExe" "$ExePath" >nul
+start "" "$ExePath"
+del "%~f0"
+"@
+    Set-Content -Path $batPath -Value $bat -Encoding ASCII
+
+    if ($OnProgress) { & $OnProgress 'launching' $info.Version }
+    Start-Process -FilePath $batPath -WindowStyle Hidden
+
+    return [PSCustomObject]@{
+        Updated = $true; Latest = $info.Version
+        Current = $Script:AppVersion; ExePath = $ExePath
+    }
 }
 
 # ---------------------------------------------------------------------------

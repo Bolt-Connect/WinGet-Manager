@@ -417,7 +417,8 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 Content="↺ Vernieuwen" Style="{StaticResource BtnBlue}"/>
                     </Grid>
 
-                    <DataGrid x:Name="GridInstalled" Grid.Row="1" IsReadOnly="True" CanUserSortColumns="True">
+                    <DataGrid x:Name="GridInstalled" Grid.Row="1" IsReadOnly="True" CanUserSortColumns="True"
+                              SelectionMode="Extended">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Naam"        Binding="{Binding Name}"             Width="220"/>
                             <DataGridTextColumn Header="ID"          Binding="{Binding Id}"               Width="230"/>
@@ -1076,45 +1077,105 @@ Write-Log "Admin: $(Test-IsAdmin)" -Source GUI
 # Zoekfunctionaliteit
 # ---------------------------------------------------------------------------
 
-$BtnSearch.Add_Click({
-    $query = $TxtSearch.Text.Trim()
-    if (-not $query) { return }
+# Search-as-you-type: debounce + async runspace per zoekopdracht
+$Script:SearchDebounce = $null
 
-    Set-Status "Zoeken naar '$query'..." $true
-    $GridSearch.ItemsSource = $null
+function Invoke-LiveSearch {
+    $query = $TxtSearch.Text.Trim()
+    if (-not $query -or $query.Length -lt 2) {
+        $GridSearch.ItemsSource = $null
+        Set-Status "Typ minimaal 2 tekens"
+        return
+    }
 
     $src = $CmbSearchSource.SelectedItem.Content
     if ($src -eq 'Alle bronnen') { $src = $null }
 
-    Run-Async -Work ([scriptblock]::Create("
-        `$results = Search-WinGetPackage -Query '$($query -replace "'","''")' $(if($src){"-Source '$src'"})
-        `$Dispatcher.Invoke([action]{ `$args[0] }, `$results)
-    ")) -OnDone {
+    Set-Status "Zoeken: $query..." $true
+
+    # Lokale runspace - via closure gebonden aan deze specifieke zoekopdracht
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.Open()
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript({
+        param($q, $s)
+        $a = @('search', $q, '--count', 50, '--accept-source-agreements', '--disable-interactivity')
+        if ($s) { $a += @('--source', $s) }
+        $output = & winget @a 2>&1 | Out-String
+        return [PSCustomObject]@{ Output = $output; Query = $q }
+    }).AddArgument($query).AddArgument($src)
+    $handle = $ps.BeginInvoke()
+
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [TimeSpan]::FromMilliseconds(200)
+    $timer.Add_Tick({
+        if (-not $handle.IsCompleted) { return }
+        $timer.Stop()
+        try {
+            $r = $ps.EndInvoke($handle) | Select-Object -First 1
+
+            # Negeer stale results als gebruiker inmiddels iets anders typt
+            $current = $TxtSearch.Text.Trim()
+            if ($r -and $r.Query -eq $current) {
+                $lines = $r.Output -split "`r?`n"
+                $results = Parse-PackageText $lines
+                $GridSearch.ItemsSource = $results
+                Set-Status "$($results.Count) resultaten voor '$($r.Query)'"
+            }
+        } catch {
+            Write-Log "Live search fout: $_" -Level WARN -Source GUI
+        } finally {
+            try { $ps.Dispose() } catch {}
+            try { $rs.Dispose() } catch {}
+        }
+    }.GetNewClosure())
+    $timer.Start()
+}
+
+# TextChanged: debounce 400ms tussen toetsaanslagen
+$TxtSearch.Add_TextChanged({
+    if ($Script:SearchDebounce) { $Script:SearchDebounce.Stop() }
+
+    if (-not $TxtSearch.Text.Trim()) {
+        $GridSearch.ItemsSource = $null
         Set-Status "Gereed"
+        return
     }
 
-    # Directe aanroep (simpeler dan async voor UI-updates)
-    $GridSearch.ItemsSource = $null
-    Set-Status "Zoeken..." $true
-    try {
-        $src2    = if ($src) { $src } else { $null }
-        $results = Search-WinGetPackage -Query $query -Source $src2
-        $GridSearch.ItemsSource = $results
-        Set-Status "$($results.Count) resultaten gevonden"
-        Write-Log "Zoekresultaten: $($results.Count) voor '$query'" -Source GUI
-    } catch {
-        Set-Status "Zoekfout"
-        Show-Error "Zoeken mislukt: $_"
-        Write-Log "Zoekfout: $_" -Level ERROR -Source GUI
+    if (-not $Script:SearchDebounce) {
+        $Script:SearchDebounce = New-Object System.Windows.Threading.DispatcherTimer
+        $Script:SearchDebounce.Interval = [TimeSpan]::FromMilliseconds(400)
+        $Script:SearchDebounce.Add_Tick({
+            $Script:SearchDebounce.Stop()
+            Invoke-LiveSearch
+        })
+    }
+    $Script:SearchDebounce.Start()
+})
+
+# Enter forceert directe search (bypass debounce)
+$TxtSearch.Add_KeyDown({
+    if ($_.Key -eq 'Return') {
+        if ($Script:SearchDebounce) { $Script:SearchDebounce.Stop() }
+        Invoke-LiveSearch
     }
 })
 
-$TxtSearch.Add_KeyDown({
-    if ($_.Key -eq 'Return') { $BtnSearch.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)) }
+# Search button doet hetzelfde als Enter
+$BtnSearch.Add_Click({
+    if ($Script:SearchDebounce) { $Script:SearchDebounce.Stop() }
+    Invoke-LiveSearch
+})
+
+# Bron veranderen: live opnieuw zoeken als er een query is
+$CmbSearchSource.Add_SelectionChanged({
+    if ($TxtSearch.Text.Trim().Length -ge 2) { Invoke-LiveSearch }
 })
 
 $BtnClearSearch.Add_Click({
-    $TxtSearch.Text     = ''
+    if ($Script:SearchDebounce) { $Script:SearchDebounce.Stop() }
+    $TxtSearch.Text = ''
     $GridSearch.ItemsSource = $null
     Set-Status "Gereed"
 })
@@ -1227,23 +1288,52 @@ $BtnRefreshInstalled.Add_Click({ Refresh-Installed })
 $TxtFilterInstalled.Add_TextChanged({ Apply-InstalledFilter })
 
 $GridInstalled.Add_SelectionChanged({
-    $pkg = $GridInstalled.SelectedItem
-    $BtnUninstallSelected.IsEnabled = ($pkg -ne $null)
-    $BtnUpdateSelectedInstalled.IsEnabled = ($pkg -ne $null -and $pkg.HasUpdate)
+    $items = @($GridInstalled.SelectedItems)
+    $count = $items.Count
+    $BtnUninstallSelected.IsEnabled = ($count -gt 0)
+
+    # Update-knop: actief als minstens 1 geselecteerd item een update heeft
+    $hasUpgradeable = $items | Where-Object { $_.HasUpdate } | Select-Object -First 1
+    $BtnUpdateSelectedInstalled.IsEnabled = ($null -ne $hasUpgradeable)
+
+    if ($count -gt 1) {
+        $BtnUninstallSelected.Content = "🗑 Verwijder ($count)"
+        $upgradeCount = @($items | Where-Object { $_.HasUpdate }).Count
+        if ($upgradeCount -gt 0) {
+            $BtnUpdateSelectedInstalled.Content = "⬆ Update geselecteerde ($upgradeCount)"
+        } else {
+            $BtnUpdateSelectedInstalled.Content = "⬆ Update geselecteerde"
+        }
+    } else {
+        $BtnUninstallSelected.Content = "🗑 Verwijderen"
+        $BtnUpdateSelectedInstalled.Content = "⬆ Update geselecteerde"
+    }
 })
 
 $BtnUninstallSelected.Add_Click({
-    $pkg = $GridInstalled.SelectedItem
-    if (-not $pkg) { return }
-    if ($cfg.ConfirmUninstall -and -not (Ask-Confirm "Verwijder '$($pkg.Name)'?")) { return }
+    $selected = @($GridInstalled.SelectedItems)
+    if ($selected.Count -eq 0) { return }
 
-    $name = $pkg.Name; $id = $pkg.Id
-    $cmdArgs = @('uninstall','--id',$id,'--exact','--silent','--disable-interactivity')
+    if ($selected.Count -eq 1) {
+        $pkg = $selected[0]
+        if ($cfg.ConfirmUninstall -and -not (Ask-Confirm "Verwijder '$($pkg.Name)'?")) { return }
+        Start-SingleUninstall -PackageId $pkg.Id -PackageName $pkg.Name
+    } else {
+        $names = ($selected | ForEach-Object { "  - $($_.Name)" }) -join "`n"
+        if (-not (Ask-Confirm "$($selected.Count) packages verwijderen?`n`n$names")) { return }
+        Start-BulkUninstall -Packages $selected
+    }
+})
+
+function Start-SingleUninstall {
+    param([string]$PackageId, [string]$PackageName)
+
+    $cmdArgs = @('uninstall','--id',$PackageId,'--exact','--silent','--disable-interactivity')
 
     $doUninstall = $null
     $doUninstall = {
         param([bool]$AfterKill = $false)
-        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Verwijderen: $name..." -OnDone {
+        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Verwijderen: $PackageName..." -OnDone {
             param($exit, $output)
             if ($exit -eq 0) {
                 Set-Status "Verwijderd"
@@ -1251,76 +1341,137 @@ $BtnUninstallSelected.Add_Click({
                 return
             }
             $info = Get-WinGetErrorInfo $exit
-
             if ($info.Action -eq 'kill' -and -not $AfterKill) {
-                $procs = Find-RelatedProcesses -PackageId $id -PackageName $name
+                $procs = Find-RelatedProcesses -PackageId $PackageId -PackageName $PackageName
                 if ($procs.Count -gt 0) {
                     $procList = ($procs | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join "`n  - "
-                    if (Ask-Confirm "Verwijderen mislukt: $name draait nog.`n`nGedetecteerde processen:`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
-                        $procs | ForEach-Object {
-                            try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
-                        }
+                    if (Ask-Confirm "Verwijderen mislukt: $PackageName draait nog.`n`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
+                        $procs | ForEach-Object { try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {} }
                         Start-Sleep -Seconds 2
                         & $doUninstall -AfterKill $true
                         return
                     }
                 }
             }
-            Show-Error "Verwijderen van $name mislukt: $($info.Msg)"
+            Show-Error "Verwijderen van $PackageName mislukt: $($info.Msg)"
             Set-Status "Mislukt"
         }.GetNewClosure()
     }.GetNewClosure()
 
     & $doUninstall
-})
+}
+
+function Start-BulkUninstall {
+    param([array]$Packages)
+
+    $UpdateProgress.Visibility = 'Visible'
+    $Window.IsEnabled = $false
+
+    $progress = [hashtable]::Synchronized(@{
+        Current = 0; Total = $Packages.Count; CurrentName = ''; Done = $false
+        Ok = 0; Fail = 0; FailedNames = @()
+    })
+
+    $pkgInfo = @($Packages | ForEach-Object { [PSCustomObject]@{ Id = $_.Id; Name = $_.Name } })
+
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.Open()
+    $rs.SessionStateProxy.SetVariable('progress', $progress)
+    $rs.SessionStateProxy.SetVariable('packages', $pkgInfo)
+
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript({
+        foreach ($pkg in $packages) {
+            $progress.Current++
+            $progress.CurrentName = $pkg.Name
+            $a = @('uninstall','--id',$pkg.Id,'--exact','--silent','--disable-interactivity')
+            $null = & winget @a 2>&1
+            if ($LASTEXITCODE -eq 0) { $progress.Ok++ }
+            else { $progress.Fail++; $progress.FailedNames += $pkg.Name }
+        }
+        $progress.Done = $true
+    })
+    $handle = $ps.BeginInvoke()
+
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [TimeSpan]::FromMilliseconds(400)
+    $timer.Add_Tick({
+        if ($progress.Current -gt 0 -and -not $progress.Done) {
+            $TxtStatus.Text = "Verwijderen ($($progress.Current)/$($progress.Total)): $($progress.CurrentName)"
+        }
+        if ($progress.Done) {
+            $timer.Stop()
+            try { $ps.EndInvoke($handle) | Out-Null } catch {}
+            $ps.Dispose(); $rs.Dispose()
+            $UpdateProgress.Visibility = 'Collapsed'
+            $Window.IsEnabled = $true
+            Refresh-Installed
+            $msg = "Klaar: $($progress.Ok) verwijderd, $($progress.Fail) mislukt"
+            Set-Status $msg
+            if ($progress.Fail -gt 0) {
+                Show-Info "$msg`n`nMislukt: $($progress.FailedNames -join ', ')"
+            }
+        }
+    }.GetNewClosure())
+    $timer.Start()
+}
 
 $BtnUpdateSelectedInstalled.Add_Click({
-    $pkg = $GridInstalled.SelectedItem
-    if (-not $pkg) { return }
+    $selected = @($GridInstalled.SelectedItems | Where-Object { $_.HasUpdate })
+    if ($selected.Count -eq 0) {
+        Show-Info "Geen geselecteerde packages hebben een update beschikbaar."
+        return
+    }
+    if ($selected.Count -eq 1) {
+        Start-SingleUpdate -PackageId $selected[0].Id -PackageName $selected[0].Name
+    } else {
+        if (-not (Ask-Confirm "$($selected.Count) packages updaten?")) { return }
+        Start-BulkUpdate -Packages $selected
+    }
+})
 
-    $name = $pkg.Name; $id = $pkg.Id
-    $cmdArgs = @('upgrade','--id',$id,'--exact','--silent',
+function Start-SingleUpdate {
+    param([string]$PackageId, [string]$PackageName)
+
+    $cmdArgs = @('upgrade','--id',$PackageId,'--exact','--silent',
                  '--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
 
     $doUpdate = $null
     $doUpdate = {
         param([bool]$AfterKill = $false)
-        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Updaten: $name..." -OnDone {
+        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Updaten: $PackageName..." -OnDone {
             param($exit, $output)
             if ($exit -eq 0) {
-                Set-Status "Update van $name geslaagd"
+                Set-Status "Update van $PackageName geslaagd"
                 Refresh-Installed
                 return
             }
             $info = Get-WinGetErrorInfo $exit
-
             if ($info.Action -eq 'kill' -and -not $AfterKill) {
-                $procs = Find-RelatedProcesses -PackageId $id -PackageName $name
+                $procs = Find-RelatedProcesses -PackageId $PackageId -PackageName $PackageName
                 if ($procs.Count -gt 0) {
                     $procList = ($procs | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join "`n  - "
-                    if (Ask-Confirm "Update mislukt: $name draait nog.`n`nGedetecteerde processen:`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
-                        Write-Log "Sluiten en retry: $($procs.Count) processen voor $name" -Source GUI
-                        $procs | ForEach-Object {
-                            try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
-                        }
+                    if (Ask-Confirm "Update mislukt: $PackageName draait nog.`n`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
+                        Write-Log "Sluiten en retry: $($procs.Count) processen voor $PackageName" -Source GUI
+                        $procs | ForEach-Object { try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {} }
                         Start-Sleep -Seconds 2
                         & $doUpdate -AfterKill $true
                         return
                     }
-                } else {
-                    Show-Error "$name draait nog maar geen process gevonden. Sluit de app handmatig en probeer opnieuw."
                 }
             } elseif ($info.Action -eq 'elevate') {
-                Show-Error "$name vereist administrator-rechten. Start WinGetManager.exe als administrator en probeer opnieuw."
-            } else {
-                Show-Error "Update van $name mislukt: $($info.Msg)"
+                Show-Error "$PackageName vereist administrator-rechten. Start WinGetManager als admin."
+                Set-Status "Update mislukt"
+                return
             }
+            Show-Error "Update van $PackageName mislukt: $($info.Msg)"
             Set-Status "Update mislukt"
         }.GetNewClosure()
     }.GetNewClosure()
 
     & $doUpdate
-})
+}
 
 # ---------------------------------------------------------------------------
 # Updates tab
@@ -1356,24 +1507,7 @@ $BtnUpdateAll.Add_Click({
     $count = $Script:UpdateablePackages.Count
     if ($count -eq 0) { Show-Info "Geen updates beschikbaar."; return }
     if (-not (Ask-Confirm "Alle $count packages updaten?")) { return }
-
-    $UpdateProgress.Visibility = 'Visible'
-    $args = @('upgrade','--all','--silent',
-              '--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
-
-    Start-WinGetWork -WinGetArgs $args -BusyMessage "Alle packages updaten..." -OnDone {
-        param($exit, $output)
-        $UpdateProgress.Visibility = 'Collapsed'
-        Refresh-Updates
-        Refresh-Installed
-        if ($exit -eq 0) {
-            Show-Info "Alle updates afgerond."
-            Set-Status "Klaar"
-        } else {
-            Show-Error "Sommige updates zijn mislukt (code $exit). Zie logs."
-            Set-Status "Update klaar (met fouten)"
-        }
-    }.GetNewClosure()
+    Start-BulkUpdate -Packages $Script:UpdateablePackages
 })
 
 $BtnUpdateSelected.Add_Click({
@@ -1383,50 +1517,85 @@ $BtnUpdateSelected.Add_Click({
         return
     }
     if (-not (Ask-Confirm "$($selected.Count) geselecteerde package(s) updaten?")) { return }
+    Start-BulkUpdate -Packages $selected
+})
+
+# Gemeenschappelijke helper: update meerdere packages met live progress
+function Start-BulkUpdate {
+    param([array]$Packages)
+
+    $total = $Packages.Count
+    if ($total -eq 0) { return }
 
     $UpdateProgress.Visibility = 'Visible'
-    Set-Status "Geselecteerde updaten..." $true
     $Window.IsEnabled = $false
+    Set-Status "Voorbereiden..." $true
 
-    $ids = @($selected | ForEach-Object { $_.Id })
+    # Synchronized hashtable: gedeeld tussen runspace en UI-thread
+    $progress = [hashtable]::Synchronized(@{
+        Current     = 0
+        Total       = $total
+        CurrentName = ''
+        Done        = $false
+        Ok          = 0
+        Fail        = 0
+        FailedNames = @()
+    })
+
+    # Vereenvoudigde package-info voor de runspace
+    $pkgInfo = @($Packages | ForEach-Object {
+        [PSCustomObject]@{ Id = $_.Id; Name = $_.Name }
+    })
 
     $rs = [runspacefactory]::CreateRunspace()
     $rs.Open()
+    $rs.SessionStateProxy.SetVariable('progress', $progress)
+    $rs.SessionStateProxy.SetVariable('packages', $pkgInfo)
+
     $ps = [powershell]::Create()
     $ps.Runspace = $rs
     [void]$ps.AddScript({
-        param($idList)
-        $ok = 0; $fail = 0
-        foreach ($id in $idList) {
-            $a = @('upgrade','--id',$id,'--exact','--silent',
+        foreach ($pkg in $packages) {
+            $progress.Current++
+            $progress.CurrentName = $pkg.Name
+            $a = @('upgrade','--id',$pkg.Id,'--exact','--silent',
                    '--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
             $null = & winget @a 2>&1
-            if ($LASTEXITCODE -eq 0) { $ok++ } else { $fail++ }
+            if ($LASTEXITCODE -eq 0) {
+                $progress.Ok++
+            } else {
+                $progress.Fail++
+                $progress.FailedNames += $pkg.Name
+            }
         }
-        return [PSCustomObject]@{ Ok = $ok; Fail = $fail }
-    }).AddArgument($ids)
+        $progress.Done = $true
+    })
     $handle = $ps.BeginInvoke()
 
     $timer = New-Object System.Windows.Threading.DispatcherTimer
-    $timer.Interval = [TimeSpan]::FromMilliseconds(500)
+    $timer.Interval = [TimeSpan]::FromMilliseconds(400)
     $timer.Add_Tick({
-        if ($handle.IsCompleted) {
+        if ($progress.Current -gt 0 -and -not $progress.Done) {
+            $TxtStatus.Text = "Updaten ($($progress.Current)/$($progress.Total)): $($progress.CurrentName)"
+        }
+        if ($progress.Done) {
             $timer.Stop()
-            $okCount = 0; $failCount = 0
-            try {
-                $r = $ps.EndInvoke($handle) | Select-Object -First 1
-                if ($r) { $okCount = $r.Ok; $failCount = $r.Fail }
-            } catch {}
+            try { $ps.EndInvoke($handle) | Out-Null } catch {}
             $ps.Dispose(); $rs.Dispose()
             $UpdateProgress.Visibility = 'Collapsed'
             $Window.IsEnabled = $true
             Refresh-Updates
             Refresh-Installed
-            Set-Status "Klaar: $okCount geslaagd, $failCount mislukt"
+            $msg = "Klaar: $($progress.Ok) geslaagd, $($progress.Fail) mislukt"
+            Set-Status $msg
+            if ($progress.Fail -gt 0) {
+                $failed = $progress.FailedNames -join ", "
+                Show-Info "$msg`n`nMislukt: $failed"
+            }
         }
     }.GetNewClosure())
     $timer.Start()
-})
+}
 
 # ---------------------------------------------------------------------------
 # Import / Export
@@ -1627,17 +1796,67 @@ $BtnResetSettings.Add_Click({
 $BtnCheckUpdates.Add_Click({ Refresh-Updates; (Get-Control 'MainTabs').SelectedIndex = 2 })
 
 $BtnSelfUpdate.Add_Click({
+    if (-not $cfg.SelfUpdateUrl) {
+        Show-Info "Geen update-URL geconfigureerd. Stel 'SelfUpdateUrl' in onder Instellingen."
+        return
+    }
+
     Set-Status "Controleren op app-update..." $true
     try {
-        $updated = Update-App -Url $cfg.SelfUpdateUrl
-        if ($updated) {
-            Show-Info "Nieuwe versie gedownload. Herstart de app."
-        } else {
-            Show-Info "App is al up-to-date (v$(Get-AppVersion))."
+        $info = Get-LatestAppVersion -Url $cfg.SelfUpdateUrl
+        if (-not $info) {
+            Show-Error "Kan geen versie-info ophalen. Controleer je internetverbinding."
+            Set-Status "Update-check mislukt"
+            return
         }
-        Set-Status "Gereed"
+
+        $current = Get-AppVersion
+        $latest  = $info.Version
+        if ([version]$latest -le [version]$current) {
+            Show-Info "App is al up-to-date (v$current)."
+            Set-Status "Up-to-date"
+            return
+        }
+
+        $msg = "Nieuwe versie beschikbaar: v$latest`n`nHuidige versie: v$current`n`n" +
+               "Wat is er nieuw:`n$(($info.Body -split "`n" | Select-Object -First 8) -join "`n")`n`n" +
+               "Nu downloaden en bijwerken? De app wordt automatisch herstart."
+        if (-not (Ask-Confirm $msg)) {
+            Set-Status "Update geannuleerd"
+            return
+        }
+
+        Set-Status "Downloaden v$latest..." $true
+        $result = Update-App -Url $cfg.SelfUpdateUrl -OnProgress {
+            param($stage, $version)
+            $Window.Dispatcher.Invoke([action]{
+                $TxtStatus.Text = switch ($stage) {
+                    'download'  { "Downloaden v$version..." }
+                    'launching' { "Update klaar, herstarten..." }
+                    default     { "Bezig: $stage" }
+                }
+            })
+        }
+
+        if ($result.Updated) {
+            Show-Info "Update geïnstalleerd! De app wordt nu opnieuw gestart met v$($result.Latest)."
+            $Window.Close()
+        } else {
+            $reasonMsg = switch ($result.Reason) {
+                'up_to_date'       { "App is al up-to-date." }
+                'no_asset'         { "Update niet gevonden in deze release." }
+                'download_failed'  { "Download mislukt - check internetverbinding." }
+                'corrupt_download' { "Download was beschadigd, probeer opnieuw." }
+                'invalid_exe'      { "Download is geen geldige executable - mogelijk corrupt of gemanipuleerd." }
+                'untrusted_url'    { "Update-URL is niet vertrouwd. Alleen github.com URLs worden toegestaan." }
+                'not_exe_runtime'  { "Self-update werkt alleen vanuit de .exe distributie." }
+                default            { "Onbekende reden: $($result.Reason)" }
+            }
+            Show-Error "Update mislukt: $reasonMsg"
+            Set-Status "Update mislukt"
+        }
     } catch {
-        Show-Error "Zelf-update mislukt: $_"
+        Show-Error "Fout bij update: $_"
         Set-Status "Fout"
     }
 })
@@ -1656,6 +1875,47 @@ $Window.Add_Loaded({
 
     if ($cfg.AutoUpdateCheckOnStart) {
         Refresh-Updates
+    }
+
+    # Achtergrond-check op nieuwe app-versie (alleen melden, niet automatisch installeren)
+    if ($cfg.SelfUpdateUrl -and $cfg.AutoUpdateCheckOnStart) {
+        $rs = [runspacefactory]::CreateRunspace()
+        $rs.Open()
+        $rs.SessionStateProxy.SetVariable('url',     $cfg.SelfUpdateUrl)
+        $rs.SessionStateProxy.SetVariable('current', (Get-AppVersion))
+        $ps = [powershell]::Create()
+        $ps.Runspace = $rs
+        [void]$ps.AddScript({
+            try {
+                $data = Invoke-RestMethod -Uri $url -TimeoutSec 8 -Headers @{
+                    'User-Agent' = "WinGetManager/$current"
+                    'Accept'     = 'application/vnd.github+json'
+                }
+                $latest = ($data.tag_name -replace '^v','').Trim()
+                if ($latest -and ([version]$latest -gt [version]$current)) {
+                    return $latest
+                }
+            } catch {}
+            return $null
+        })
+        $handle = $ps.BeginInvoke()
+        $checkTimer = New-Object System.Windows.Threading.DispatcherTimer
+        $checkTimer.Interval = [TimeSpan]::FromMilliseconds(500)
+        $checkTimer.Add_Tick({
+            if ($handle.IsCompleted) {
+                $checkTimer.Stop()
+                try {
+                    $result = $ps.EndInvoke($handle) | Select-Object -First 1
+                    if ($result) {
+                        Write-Log "Update beschikbaar: v$result" -Source GUI
+                        $TxtStatus.Text = "v$result beschikbaar - klik 'App updaten' bovenin"
+                        $BtnSelfUpdate.Background = [System.Windows.Media.Brushes]::Orange
+                    }
+                } catch {}
+                try { $ps.Dispose(); $rs.Dispose() } catch {}
+            }
+        }.GetNewClosure())
+        $checkTimer.Start()
     }
 })
 

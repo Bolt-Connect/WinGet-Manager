@@ -21,7 +21,13 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark-theme interfac
 
 ## Screenshots
 
-> Screenshots volgen in v0.2
+| Zoeken | Geïnstalleerd | Updates |
+|--------|---------------|---------|
+| ![Search](assets/screenshots/01-search.png) | ![Installed](assets/screenshots/02-installed.png) | ![Updates](assets/screenshots/03-updates.png) |
+
+| Import/Export | Instellingen | Light thema |
+|---------------|--------------|-------------|
+| ![Import/Export](assets/screenshots/04-import-export.png) | ![Settings](assets/screenshots/05-settings.png) | ![Light](assets/screenshots/06-light-theme.png) |
 
 ## Installatie
 

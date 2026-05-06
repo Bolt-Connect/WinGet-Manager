@@ -9,14 +9,25 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 ### Toegevoegd
 - (nog niets)
 
+---
+
+## [0.2.0] - 2026-05-06
+
+### Toegevoegd
+- Werkende self-update via GitHub Releases API: detecteert nieuwere versie, downloadt de nieuwe `.exe`, vervangt zichzelf en herstart automatisch.
+- Achtergrond update-check bij opstarten — knop "App updaten" wordt oranje wanneer er een nieuwere versie beschikbaar is.
+- Search-as-you-type op de Zoeken-tab met 400ms debouncing en async runspaces (UI freeze-free).
+- Live progress-tekst bij Update Alles / Selectie updaten: "Updaten (3/12): Firefox..."
+- Mislukt-overzicht na bulk update toont welke packages niet konden worden bijgewerkt.
+- Screenshots-mappen-structuur en README-sectie voor visuele documentatie.
+
 ### Gewijzigd
-- (nog niets)
+- Versie verhoogd van `1.0.0` (intern) naar `0.2.0` om aan te sluiten bij de release-tag.
+- Update-knop verwijst nu naar GitHub Releases API ipv. een placeholder-URL.
 
 ### Opgelost
-- (nog niets)
-
-### Verwijderd
-- (nog niets)
+- Race condition in de search-debouncing waarbij oude timers null-reference fouten veroorzaakten.
+- "Cannot bind argument" fout bij update door collision met PowerShell `$args` automatic variable.
 
 ---
 
@@ -46,5 +57,6 @@ Eerste publieke release.
 - Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
 - SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.1.0
