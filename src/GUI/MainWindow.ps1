@@ -285,6 +285,24 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             <Setter Property="FontSize"     Value="13"/>
         </Style>
 
+        <!-- ComboBoxItem (anders blijft tekst onzichtbaar in dark mode) -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background"   Value="#313149"/>
+            <Setter Property="Foreground"   Value="#CDD6F4"/>
+            <Setter Property="Padding"      Value="8,6"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="#45475A"/>
+                    <Setter Property="Foreground" Value="#CDD6F4"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#45475A"/>
+                    <Setter Property="Foreground" Value="#CDD6F4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- CheckBox -->
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="#CDD6F4"/>
@@ -756,12 +774,57 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <TextBox x:Name="TxtSettingsUpdateUrl" Grid.Column="1"/>
                         </Grid>
 
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,32">
                             <Button x:Name="BtnSaveSettings" Content="💾 Opslaan"
                                     Style="{StaticResource BtnGreen}" Margin="0,0,8,0"/>
                             <Button x:Name="BtnResetSettings" Content="↩ Standaard herstellen"
                                     Style="{StaticResource BtnGhost}"/>
                         </StackPanel>
+
+                        <TextBlock Text="Sneltoetsen" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="#89B4FA" Margin="0,0,0,12"/>
+
+                        <Border Background="#313149" CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="F5"        Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Vernieuw huidige tab"               Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Ctrl + F"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="Spring naar Zoeken-tab"             Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Ctrl + R"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="Open Updates-tab en check"          Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Ctrl + L"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="Open Logs-tab"                      Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Ctrl + W"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="Sluit de app"                       Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Esc"       Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="Wis zoekveld op Zoeken-tab"         Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Enter"     Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13"/>
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="In zoekveld: directe zoekactie (skip 400ms wachten)" Foreground="#CDD6F4" FontSize="13"/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Text="Tip: Ctrl/Shift-klik in Geïnstalleerd voor multi-select bulk-acties."
+                                   Foreground="#6C7086" FontSize="11" Margin="0,8,0,0" FontStyle="Italic"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -871,6 +934,7 @@ $TxtAppVersion           = Get-Control 'TxtAppVersion'
 $AdminBadge              = Get-Control 'AdminBadge'
 $BtnCheckUpdates         = Get-Control 'BtnCheckUpdates'
 $BtnSelfUpdate           = Get-Control 'BtnSelfUpdate'
+$MainTabs                = Get-Control 'MainTabs'
 
 # ---------------------------------------------------------------------------
 # Hulpfuncties UI-thread
@@ -894,6 +958,77 @@ function Set-UIEnabled {
 function Show-Info  { param($msg) [System.Windows.MessageBox]::Show($msg, "Info",    "OK", "Information") | Out-Null }
 function Show-Error { param($msg) [System.Windows.MessageBox]::Show($msg, "Fout",    "OK", "Error")       | Out-Null }
 function Ask-Confirm { param($msg) ([System.Windows.MessageBox]::Show($msg, "Bevestig", "YesNo", "Question")) -eq 'Yes' }
+
+# Confirmation met optionele "Niet meer vragen"-checkbox die naar config schrijft
+function Ask-ConfirmEx {
+    param(
+        [string]$Message,
+        [string]$Title = 'Bevestigen',
+        [string]$ConfigKeyToDisable
+    )
+
+    # Snelpad: gebruiker heeft eerder "niet meer vragen" aangevinkt
+    if ($ConfigKeyToDisable -and $cfg.$ConfigKeyToDisable -eq $false) {
+        return $true
+    }
+
+    # Pas thema toe op de dialog-XAML
+    [xml]$dlgXaml = Apply-ThemeColors -ThemeName $ActiveTheme -xamlText @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="$Title" Height="220" Width="480" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#1E1E2E">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="TxtMsg" Grid.Row="0" Foreground="#CDD6F4"
+                   FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
+        <CheckBox x:Name="ChkSkip" Grid.Row="1" Foreground="#6C7086" FontSize="12"
+                  Content="Niet meer vragen voor deze actie" Margin="0,16,0,0"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="BtnYes" Content="Ja" Width="90" Height="32" Margin="0,0,8,0"
+                    Background="#89B4FA" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand"/>
+            <Button x:Name="BtnNo" Content="Nee" Width="90" Height="32"
+                    Background="#313149" Foreground="#CDD6F4" BorderThickness="0" Cursor="Hand"/>
+        </StackPanel>
+    </Grid>
+</Window>
+"@
+
+    $dlg = [System.Windows.Markup.XamlReader]::Load([System.Xml.XmlNodeReader]::new($dlgXaml))
+    $dlg.Owner = $Window
+    $dlg.FindName('TxtMsg').Text = $Message
+    $chk = $dlg.FindName('ChkSkip')
+
+    # Verberg checkbox als er geen config-key is
+    if (-not $ConfigKeyToDisable) { $chk.Visibility = 'Collapsed' }
+
+    $script:_dlgResult = $false
+    $dlg.FindName('BtnYes').Add_Click({ $script:_dlgResult = $true; $dlg.Close() })
+    $dlg.FindName('BtnNo').Add_Click({ $script:_dlgResult = $false; $dlg.Close() })
+    $dlg.Add_PreviewKeyDown({
+        if ($_.Key -eq 'Escape') { $script:_dlgResult = $false; $dlg.Close() }
+        if ($_.Key -eq 'Return') { $script:_dlgResult = $true; $dlg.Close() }
+    })
+
+    [void]$dlg.ShowDialog()
+
+    if ($ConfigKeyToDisable -and $script:_dlgResult -and $chk.IsChecked) {
+        try {
+            Set-ConfigValue -Key $ConfigKeyToDisable -Value $false
+            $script:cfg = Get-AppConfig
+            Write-Log "Config '$ConfigKeyToDisable' uitgeschakeld op verzoek" -Source GUI
+        } catch {
+            Write-Log "Config update mislukt: $_" -Level WARN -Source GUI
+        }
+    }
+
+    return $script:_dlgResult
+}
 
 # --- WinGet exit codes -> menselijke teksten + actie suggesties -------------
 $Script:WinGetErrors = @{
@@ -1120,7 +1255,7 @@ function Invoke-LiveSearch {
             if ($r -and $r.Query -eq $current) {
                 $lines = $r.Output -split "`r?`n"
                 $results = Parse-PackageText $lines
-                $GridSearch.ItemsSource = $results
+                $GridSearch.ItemsSource = @($results)
                 Set-Status "$($results.Count) resultaten voor '$($r.Query)'"
             }
         } catch {
@@ -1260,7 +1395,7 @@ function Refresh-Installed {
             }
         }
 
-        $Script:AllInstalled = @($merged)
+        $Script:AllInstalled = @($merged | Where-Object { $_ })
         Apply-InstalledFilter
         $upgradable = @($Script:AllInstalled | Where-Object { $_.HasUpdate }).Count
         $TxtInstalledCount.Text = "$($Script:AllInstalled.Count) packages, $upgradable updatebaar"
@@ -1276,11 +1411,11 @@ function Refresh-Installed {
 function Apply-InstalledFilter {
     $filter = $TxtFilterInstalled.Text.Trim().ToLower()
     if (-not $filter) {
-        $GridInstalled.ItemsSource = $Script:AllInstalled
+        $GridInstalled.ItemsSource = @($Script:AllInstalled)
     } else {
-        $GridInstalled.ItemsSource = $Script:AllInstalled | Where-Object {
+        $GridInstalled.ItemsSource = @($Script:AllInstalled | Where-Object {
             $_.Name -like "*$filter*" -or $_.Id -like "*$filter*"
-        }
+        })
     }
 }
 
@@ -1316,11 +1451,17 @@ $BtnUninstallSelected.Add_Click({
 
     if ($selected.Count -eq 1) {
         $pkg = $selected[0]
-        if ($cfg.ConfirmUninstall -and -not (Ask-Confirm "Verwijder '$($pkg.Name)'?")) { return }
+        if ($cfg.ConfirmUninstall) {
+            if (-not (Ask-ConfirmEx -Message "Verwijder '$($pkg.Name)'?" `
+                                    -Title "Pakket verwijderen" `
+                                    -ConfigKeyToDisable 'ConfirmUninstall')) { return }
+        }
         Start-SingleUninstall -PackageId $pkg.Id -PackageName $pkg.Name
     } else {
         $names = ($selected | ForEach-Object { "  - $($_.Name)" }) -join "`n"
-        if (-not (Ask-Confirm "$($selected.Count) packages verwijderen?`n`n$names")) { return }
+        if (-not (Ask-ConfirmEx -Message "$($selected.Count) packages verwijderen?`n`n$names" `
+                                -Title "Bulk verwijderen" `
+                                -ConfigKeyToDisable 'ConfirmUninstall')) { return }
         Start-BulkUninstall -Packages $selected
     }
 })
@@ -1488,7 +1629,7 @@ function Refresh-Updates {
         $Script:UpdateablePackages = $raw | ForEach-Object {
             $_ | Add-Member -NotePropertyName Selected -NotePropertyValue $false -PassThru
         }
-        $GridUpdates.ItemsSource = $Script:UpdateablePackages
+        $GridUpdates.ItemsSource = @($Script:UpdateablePackages)
         $TxtUpdateCount.Text     = $Script:UpdateablePackages.Count
         $TxtWinGetVersion.Text   = Get-WinGetVersion
         $BtnUpdateSelected.IsEnabled = $Script:UpdateablePackages.Count -gt 0
@@ -1651,7 +1792,7 @@ $BtnImport.Add_Click({
 function Refresh-Sources {
     $GridSources.ItemsSource = $null
     try {
-        $GridSources.ItemsSource = Get-WinGetSources
+        $GridSources.ItemsSource = @(Get-WinGetSources)
         Set-Status "Bronnen geladen"
     } catch {
         Write-Log "Bronnen laden mislukt: $_" -Level ERROR -Source GUI
@@ -1933,6 +2074,82 @@ if (Test-Path $iconCandidate) {
         Write-Log "Icoon laden mislukt: $_" -Level WARN -Source GUI
     }
 }
+
+# ---------------------------------------------------------------------------
+# Keyboard shortcuts
+# ---------------------------------------------------------------------------
+
+$keyHandler = {
+    try {
+        # In WPF event handlers van PowerShell: $args[0]=sender, $args[1]=KeyEventArgs
+        if ($args.Count -lt 2) { return }
+        $e   = $args[1]
+        $key = $e.Key
+        $mods = [System.Windows.Input.Keyboard]::Modifiers
+        $ctrl = ($mods -band [System.Windows.Input.ModifierKeys]::Control) -ne 0
+
+        Write-Log "Keypress: $key (ctrl=$ctrl)" -Level INFO -Source GUI
+
+        $tabs = $Window.FindName('MainTabs')
+        if (-not $tabs) { return }
+
+        # 0=Zoeken 1=Geinstalleerd 2=Updates 3=Import/Export 4=Bronnen 5=Logs 6=Settings
+
+        if ($key -eq 'F5') {
+            $btn = switch ($tabs.SelectedIndex) {
+                0 { $BtnSearch }
+                1 { $BtnRefreshInstalled }
+                2 { $BtnRefreshUpdates }
+                4 { $BtnRefreshSources }
+            }
+            if ($btn) {
+                # Flash de knop 250ms geel zodat F5-actie duidelijk zichtbaar is
+                $origBg = $btn.Background
+                $btn.Background = [System.Windows.Media.Brushes]::Gold
+                $flashTimer = New-Object System.Windows.Threading.DispatcherTimer
+                $flashTimer.Interval = [TimeSpan]::FromMilliseconds(250)
+                $flashTimer.Add_Tick({
+                    $btn.Background = $origBg
+                    $flashTimer.Stop()
+                }.GetNewClosure())
+                $flashTimer.Start()
+
+                # Trigger de daadwerkelijke click-actie
+                $clickEvent = [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                $btn.RaiseEvent($clickEvent)
+            }
+            $e.Handled = $true
+            return
+        }
+
+        if ($key -eq 'Escape') {
+            if ($tabs.SelectedIndex -eq 0 -and $TxtSearch.Text) {
+                $TxtSearch.Text = ''
+                $e.Handled = $true
+            }
+            return
+        }
+
+        if ($ctrl) {
+            switch ($key) {
+                'F' { $tabs.SelectedIndex = 0; $TxtSearch.Focus() | Out-Null; $TxtSearch.SelectAll(); $e.Handled = $true }
+                'R' { $tabs.SelectedIndex = 2; Refresh-Updates; $e.Handled = $true }
+                'L' { $tabs.SelectedIndex = 5; $e.Handled = $true }
+                'W' { $Window.Close(); $e.Handled = $true }
+            }
+        }
+    } catch {
+        Write-Log "Keyboard shortcut fout: $_" -Level WARN -Source GUI
+    }
+}
+
+# Registreer met AddHandler ipv. Add_PreviewKeyDown - vangt ook events die al door
+# child controls zijn 'gehandeld' (anders eet TextBox/DataGrid bv. F5/Ctrl+W op)
+$Window.AddHandler(
+    [System.Windows.UIElement]::PreviewKeyDownEvent,
+    [System.Windows.Input.KeyEventHandler]$keyHandler,
+    $true   # handledEventsToo
+)
 
 Write-Log "WinGet Manager GUI starten" -Source GUI
 $null = $Window.ShowDialog()

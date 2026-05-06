@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 
 $Script:WinGetExe = 'winget'
-$Script:AppVersion = '0.2.1'
+$Script:AppVersion = '0.2.2'
 
 # ---------------------------------------------------------------------------
 # Initialisatie

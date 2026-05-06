@@ -11,6 +11,28 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ---
 
+## [0.2.2] - 2026-05-06
+
+### Toegevoegd
+- Globale keyboard shortcuts:
+  - `F5` ververst de huidige tab (Geïnstalleerd / Updates / Bronnen / Zoeken)
+  - `Ctrl+F` springt naar Zoeken-tab en focust de zoekbalk
+  - `Ctrl+R` opent Updates-tab en ververst meteen
+  - `Ctrl+L` opent Logs-tab
+  - `Ctrl+W` sluit de app
+  - `Esc` wist het zoekveld op de Zoeken-tab
+- F5 simuleert een klik op de bijbehorende Vernieuwen-knop met **goud-flash animatie** (250ms) voor zichtbare feedback.
+- "Sneltoetsen" sectie in Instellingen-tab met overzicht van alle keyboard shortcuts.
+- "Niet meer vragen"-checkbox bij verwijder-confirmaties; aanvinken slaat ConfirmUninstall=false op in config.
+- `Ask-ConfirmEx` helper: themed custom dialog met optionele opt-out checkbox per actie.
+
+### Opgelost
+- ComboBoxItems waren onleesbaar in dark mode (donkere systeem-tekst op donkere achtergrond). Toegevoegd: expliciete ComboBoxItem-style met theme-bewuste Foreground.
+- DataGrid.ItemsSource crashte bij pipelines met 1 resultaat (PowerShell unwrapt single-item arrays naar scalar). Alle assignments nu gewrapped met `@(...)`.
+- Keyboard shortcut handler werd niet altijd gevuurd als TextBox/DataGrid focus had. Vervangen door `AddHandler` met `handledEventsToo=$true`.
+
+---
+
 ## [0.2.1] - 2026-05-06
 
 ### Toegevoegd
@@ -74,7 +96,8 @@ Eerste publieke release.
 - Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
 - SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.1.0
