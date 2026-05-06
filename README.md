@@ -135,7 +135,9 @@ installer/             Inno Setup script
 
 ### 🌍 v1.1.0 — Multi-language
 - [ ] **Engelse vertaling** (i18n infrastructuur + EN-US locale)
-- [ ] Taal-keuze in Settings tab (NL / EN / Auto)
+- [ ] Taal-keuze in Settings tab: **Auto / Nederlands / English**
+  - Auto = volgt Windows-systeemtaal: NL voor Nederlands, anders EN als fallback
+  - Andere systeemtalen (DE, FR, etc.) krijgen ook automatisch EN
 - [ ] Vertaal-bestanden in `i18n/<locale>.json` formaat
 - [ ] Documentatie ook in EN (README, CHANGELOG)
 
