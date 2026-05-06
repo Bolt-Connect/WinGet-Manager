@@ -26,8 +26,21 @@ Open een issue met label `enhancement` waarin je beschrijft:
 2. Maak een feature-branch: `git checkout -b feat/mijn-feature`
 3. Maak je wijzigingen in `src/`
 4. Build lokaal: `.\Build.bat` en test `build\WinGetManager.exe`
-5. Commit met duidelijke berichten (`feat: ...`, `fix: ...`, `docs: ...`)
-6. Open een PR met beschrijving van wat er verandert en waarom
+5. Voeg een regel toe onder de juiste sectie in [CHANGELOG.md](CHANGELOG.md) → `## [Unreleased]`
+6. Commit met duidelijke berichten (`feat: ...`, `fix: ...`, `docs: ...`)
+7. Open een PR met beschrijving van wat er verandert en waarom
+
+### Conventional commits (aanbevolen)
+
+| Prefix | Wanneer |
+|---|---|
+| `feat:` | Nieuwe feature voor de gebruiker |
+| `fix:` | Bug fix |
+| `docs:` | Alleen documentatie |
+| `style:` | Formattering, geen code-wijziging |
+| `refactor:` | Code-herstructurering zonder gedragsverandering |
+| `test:` | Tests toevoegen of aanpassen |
+| `chore:` | Build, CI, dependencies |
 
 ## Codestijl
 

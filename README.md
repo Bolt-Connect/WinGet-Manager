@@ -82,6 +82,7 @@ Issues en pull requests zijn welkom. Zie:
 - [CONTRIBUTING.md](CONTRIBUTING.md) — hoe te beginnen
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community-standaarden
 - [SECURITY.md](SECURITY.md) — beveiligingsproblemen melden
+- [CHANGELOG.md](CHANGELOG.md) — wat veranderde per versie
 
 ## Project structuur
 
