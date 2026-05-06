@@ -1,0 +1,30 @@
+# Build output
+build/
+*.exe
+
+# Logs
+logs/
+*.log
+
+# Setup state / artifacts
+setup.log
+.setup-state.json
+
+# Sign script side-effects (handtekeningen worden bij elke build vernieuwd)
+# Niet de scripts zelf negeren, alleen de signature blocks
+# (geregeld door Build-Exe.ps1)
+
+# OS
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors
+.vs/
+.vscode/
+*.suo
+*.user
+*.swp
+
+# Local config overrides
+config/settings.local.json

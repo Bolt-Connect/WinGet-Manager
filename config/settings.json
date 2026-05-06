@@ -1,0 +1,14 @@
+{
+  "LogDirectory": "logs",
+  "LogLevel": "INFO",
+  "LogRetentionDays": 30,
+  "MaxLogFileSizeMB": 10,
+  "WinGetPath": "winget",
+  "DefaultScope": "user",
+  "AutoUpdateCheckOnStart": true,
+  "ConfirmUninstall": true,
+  "ConfirmUpdate": false,
+  "SelfUpdateUrl": "https://raw.githubusercontent.com/your-org/winget-app/main/version.json",
+  "Theme": "Dark",
+  "Language": "nl-NL"
+}

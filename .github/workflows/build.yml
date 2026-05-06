@@ -1,0 +1,79 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write   # nodig om release te maken
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PS2EXE module installeren
+        shell: powershell
+        run: |
+          Install-Module ps2exe -Scope CurrentUser -Force -AllowClobber
+
+      - name: Icoon genereren (als die er nog niet is)
+        shell: powershell
+        run: |
+          if (-not (Test-Path 'assets\icon.ico')) {
+            .\Generate-Icon.ps1
+          }
+
+      - name: EXE bouwen
+        shell: powershell
+        run: |
+          .\Build-Exe.ps1
+
+      - name: Verifieer EXE
+        shell: powershell
+        run: |
+          if (-not (Test-Path 'build\WinGetManager.exe')) {
+            Write-Error "Build mislukt - geen exe gevonden"
+            exit 1
+          }
+          $size = (Get-Item 'build\WinGetManager.exe').Length / 1KB
+          Write-Host "EXE: $size KB"
+
+      - name: Upload als artifact (elke commit)
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinGetManager-${{ github.sha }}
+          path: |
+            build/WinGetManager.exe
+            build/config/settings.json
+          retention-days: 30
+
+      # ── Releases alleen bij git tag (vX.Y.Z) ──────────────────────────────
+      - name: Release-bundel maken
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: powershell
+        run: |
+          $version = "${{ github.ref_name }}"
+          $bundleDir = "release\WinGetManager-$version"
+          New-Item -ItemType Directory -Path $bundleDir -Force | Out-Null
+          Copy-Item 'build\WinGetManager.exe' $bundleDir
+          Copy-Item -Recurse 'build\config' $bundleDir
+          Copy-Item 'README.md' $bundleDir
+          Copy-Item 'LICENSE' $bundleDir
+          Compress-Archive -Path "$bundleDir\*" -DestinationPath "release\WinGetManager-$version.zip" -Force
+
+      - name: GitHub Release publiceren
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/WinGetManager.exe
+            release/WinGetManager-${{ github.ref_name }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
