@@ -108,7 +108,7 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-### ✅ v0.2.x (huidige stable)
+### ✅ v0.2.2 (huidige stable)
 - [x] Dark / Light / Auto theme (volgt Windows-systeemvoorkeur)
 - [x] Async UI met live progress feedback
 - [x] Auto-detectie en sluiten van apps die updates blokkeren
@@ -118,14 +118,14 @@ installer/             Inno Setup script
 - [x] Security: HTTPS-only updates, PE-header validatie
 - [x] GitHub Actions auto-build + release pipeline
 - [x] Portable + Inno Setup installer distributie
+- [x] Keyboard shortcuts (`Ctrl+F` zoek, `F5` ververs, `Esc` wis zoekveld, `Ctrl+R` updates, `Ctrl+L` logs, `Ctrl+W` sluit)
+- [x] "Niet meer vragen"-optie bij verwijder-confirmaties
 
 ### 🚧 v0.3.0 — UX polish
 - [ ] System tray-icoon (minimaliseren naar tray, achtergrond update-check)
 - [ ] Windows toast-notificaties bij voltooide updates
-- [ ] Keyboard shortcuts (`Ctrl+F` zoek, `F5` ververs, `Esc` annuleer, `Ctrl+R` updates)
 - [ ] Cancel-knop voor lopende bulk-operaties
 - [ ] Package details paneel (klik op item → zijbalk met beschrijving, uitgever, links)
-- [ ] "Don't ask again"-optie bij confirmaties
 
 ### 🌍 v0.4.0 — Multi-language
 - [ ] **Engelse vertaling** (i18n infrastructuur + EN-US locale)
