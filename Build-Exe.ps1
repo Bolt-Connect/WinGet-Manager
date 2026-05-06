@@ -168,16 +168,37 @@ if (-not $ScriptRoot -or -not (Test-Path $ScriptRoot)) {
 }
 if (-not $ScriptRoot) { $ScriptRoot = (Get-Location).Path }
 
-# Config expliciet initialiseren met absoluut pad (Get-AppConfig gebruikt
-# anders $PSScriptRoot dat in PS2EXE leeg is)
-$configPath = Join-Path $ScriptRoot 'config\settings.json'
+# === Slimme config/log lokatie ===
+# Portable: schrijf naast de exe als die map schrijfbaar is
+# Anders: gebruik %APPDATA%\WinGetManager (geinstalleerd in Program Files)
+function Test-FolderWritable {
+    param([string]$Path)
+    try {
+        if (-not (Test-Path $Path)) { return $false }
+        $testFile = Join-Path $Path ".wm_writetest_$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        [System.IO.File]::WriteAllText($testFile, 'x')
+        Remove-Item $testFile -Force -ErrorAction SilentlyContinue
+        return $true
+    } catch { return $false }
+}
+
+if (Test-FolderWritable $ScriptRoot) {
+    $DataRoot = $ScriptRoot
+} else {
+    $DataRoot = Join-Path $env:APPDATA 'WinGetManager'
+    if (-not (Test-Path $DataRoot)) {
+        New-Item -ItemType Directory -Path $DataRoot -Force | Out-Null
+    }
+}
+
+$configPath = Join-Path $DataRoot 'config\settings.json'
 Initialize-Config -ConfigPath $configPath
 $cfg = Get-AppConfig
 
 $logDir = if ([System.IO.Path]::IsPathRooted($cfg.LogDirectory)) {
     $cfg.LogDirectory
 } else {
-    Join-Path $ScriptRoot $cfg.LogDirectory
+    Join-Path $DataRoot $cfg.LogDirectory
 }
 $logArgs = @{
     LogDirectory  = $logDir
