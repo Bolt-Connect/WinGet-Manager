@@ -127,7 +127,13 @@ installer/             Inno Setup script
 - [ ] Cancel-knop voor lopende bulk-operaties
 - [ ] Package details paneel (klik op item → zijbalk met beschrijving, uitgever, links)
 
-### 🌍 v0.4.0 — Multi-language
+### 🎯 v1.0.0 — Eerste stabiele release
+- [ ] Real-world bug fixes na publieke 0.3.0 release
+- [ ] Documentatie completeren (screenshots, getting-started gids)
+- [ ] Volledige testing-pass over alle features
+- [ ] Polish van details die opvallen bij regulier gebruik
+
+### 🌍 v1.1.0 — Multi-language
 - [ ] **Engelse vertaling** (i18n infrastructuur + EN-US locale)
 - [ ] Taal-keuze in Settings tab (NL / EN / Auto)
 - [ ] Vertaal-bestanden in `i18n/<locale>.json` formaat
