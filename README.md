@@ -133,12 +133,6 @@ installer/             Inno Setup script
 - [ ] Vertaal-bestanden in `i18n/<locale>.json` formaat
 - [ ] Documentatie ook in EN (README, CHANGELOG)
 
-### 🎯 v1.0.0 — Distributie + signing
-- [ ] **Microsoft Store** submit ($19 eenmalig — lost SmartScreen + Smart App Control op)
-- [ ] **`winget-pkgs`** manifest indienen — daarna `winget install WinGetManager`
-- [ ] **SignPath** code-signing (gratis voor OSS) — onbekende-uitgever waarschuwing weg
-- [ ] Officiële website / GitHub Pages docs
-
 ### 💡 Ideeën (nog niet ingepland)
 - "Recent geüpdate" history-tab
 - Custom WinGet-bron-templates
