@@ -13,7 +13,7 @@ $Script:Defaults = [ordered]@{
     AutoUpdateCheckOnStart= $true
     ConfirmUninstall      = $true
     ConfirmUpdate         = $false
-    SelfUpdateUrl         = ''
+    SelfUpdateUrl         = 'https://api.github.com/repos/Bolt-Connect/WinGetManager/releases/latest'
     Theme                 = 'Auto'
     Language              = 'nl-NL'
 }
