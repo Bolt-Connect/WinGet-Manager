@@ -25,22 +25,33 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark-theme interfac
 
 ## Installatie
 
-### Optie 1 — Portable (aanbevolen voor nu)
+### Optie 1 — Setup installer (aanbevolen)
 
-1. Download `WinGetManager.exe` van de [Releases-pagina](../../releases)
+Download `WinGetManager-Setup-x.y.z.exe` van de [Releases-pagina](../../releases) en doorloop de wizard. De installer:
+
+- Plaatst de app in `Program Files\WinGetManager\` of in een andere gekozen locatie
+- Maakt een Start-menu en (optioneel) bureaublad-snelkoppeling
+- Optioneel een dagelijkse Task Scheduler voor auto-update
+- Verschijnt netjes in **Configuratiescherm → Programma's** met uninstaller
+
+### Optie 2 — Portable
+
+1. Download `WinGetManager.exe` (alleenstaand bestand) van de [Releases-pagina](../../releases)
 2. Plaats in een map naar keuze
-3. Dubbelklik
+3. Dubbelklik — config en logs worden automatisch naast de exe aangemaakt
 
-Geen installatie nodig.
+Voor offline-distributie kan ook de portable zip (`WinGetManager-vX.Y.Z-portable.zip`) gebruikt worden.
 
-### Optie 2 — Vanuit source bouwen
+### Optie 3 — Vanuit source bouwen
 
 ```powershell
 git clone https://github.com/Bolt-Connect/WinGetManager.git
 cd WinGetManager
-.\Build.bat
-# Output: build\WinGetManager.exe
+.\Build.bat                              # bouwt build\WinGetManager.exe
+.\Build-Installer.ps1 -Version 0.1.0     # optioneel: maakt release\WinGetManager-Setup-0.1.0.exe
 ```
+
+Voor de installer is [Inno Setup 6](https://jrsoftware.org/isdl.php) nodig (`winget install JRSoftware.InnoSetup`).
 
 ## Silent mode (automatisering)
 
