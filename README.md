@@ -66,4 +66,33 @@ MIT — zie [LICENSE](LICENSE).
 
 ## Bijdragen
 
-Issues en pull requests zijn welkom. Voor grotere wijzigingen graag eerst een issue openen om te bespreken.
+Issues en pull requests zijn welkom. Zie:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — hoe te beginnen
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community-standaarden
+- [SECURITY.md](SECURITY.md) — beveiligingsproblemen melden
+
+## Project structuur
+
+```
+src/
+├── Core/              Wrapper-modules: Logging, Config, WinGet-Core
+├── GUI/MainWindow.ps1 WPF dark/light theme interface
+└── Silent/            Headless CLI
+
+Build-Exe.ps1          Bundelt alles naar single .exe via PS2EXE
+Build.bat              Wrapper voor het build-script
+Generate-Icon.ps1      Genereert assets/icon.ico
+.github/workflows/     GitHub Actions: auto-build + release
+```
+
+## Roadmap
+
+- [x] Dark / light / auto theme
+- [x] Async background runspace voor lange operaties
+- [x] Auto-close apps die de update blokkeren
+- [x] GitHub Actions auto-build
+- [ ] Self-update via GitHub Releases API
+- [ ] Microsoft Store distributie
+- [ ] System tray-icoon met snelle update-actie
+- [ ] Submit naar `winget-pkgs` (zelf installeerbaar via winget)

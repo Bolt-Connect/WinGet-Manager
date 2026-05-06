@@ -14,7 +14,7 @@ $Script:Defaults = [ordered]@{
     ConfirmUninstall      = $true
     ConfirmUpdate         = $false
     SelfUpdateUrl         = ''
-    Theme                 = 'Dark'
+    Theme                 = 'Auto'
     Language              = 'nl-NL'
 }
 

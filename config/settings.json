@@ -9,6 +9,6 @@
   "ConfirmUninstall": true,
   "ConfirmUpdate": false,
   "SelfUpdateUrl": "https://raw.githubusercontent.com/your-org/winget-app/main/version.json",
-  "Theme": "Dark",
+  "Theme": "Auto",
   "Language": "nl-NL"
 }

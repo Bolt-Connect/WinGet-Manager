@@ -23,7 +23,11 @@ param(
 
 $TaskName        = 'WinGetManager-AutoUpdate'
 $TaskDescription = 'WinGet Manager: dagelijkse automatische package-updates'
-$ScriptPath      = Join-Path $PSScriptRoot 'WinGetManager.ps1'
+
+# Voorkeur: build\WinGetManager.exe. Fallback: PS1 source.
+$exePath  = Join-Path $PSScriptRoot 'build\WinGetManager.exe'
+$ps1Path  = Join-Path $PSScriptRoot 'WinGetManager.ps1'
+$useExe   = Test-Path $exePath
 
 if ($Uninstall) {
     if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
@@ -35,9 +39,13 @@ if ($Uninstall) {
     exit 0
 }
 
-$action  = New-ScheduledTaskAction `
-    -Execute 'powershell.exe' `
-    -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$ScriptPath`" -UpdateAll -Silent"
+if ($useExe) {
+    $action = New-ScheduledTaskAction -Execute $exePath -Argument "-UpdateAll -Silent"
+} else {
+    $action = New-ScheduledTaskAction `
+        -Execute 'powershell.exe' `
+        -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$ps1Path`" -UpdateAll -Silent"
+}
 
 $trigger = New-ScheduledTaskTrigger -Daily -At $Time
 
@@ -65,7 +73,7 @@ Write-Host ""
 Write-Host "✓ Geplande taak geregistreerd:" -ForegroundColor Green
 Write-Host "  Naam:      $TaskName"
 Write-Host "  Tijdstip:  Dagelijks om $Time"
-Write-Host "  Script:    $ScriptPath"
+Write-Host "  Doel:      $(if ($useExe) { $exePath } else { $ps1Path })"
 Write-Host "  Logboek:   Zie de logs\ map in de app-directory"
 Write-Host ""
 Write-Host "Handmatig starten:"

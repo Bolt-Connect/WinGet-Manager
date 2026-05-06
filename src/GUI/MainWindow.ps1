@@ -33,6 +33,79 @@ Set-LogObservable $LogCollection
 # ---------------------------------------------------------------------------
 # XAML definitie
 # ---------------------------------------------------------------------------
+# Theme palettes
+# ---------------------------------------------------------------------------
+
+$Script:Themes = @{
+    Dark = @{
+        BgPrimary    = '#1A1B26'   # iets dieper
+        BgSecondary  = '#24283B'
+        BgCard       = '#2F3349'   # iets lichter voor contrast
+        BorderColor  = '#3B4261'
+        TextMuted    = '#7A88B0'   # iets helderder zodat muted-text leesbaar blijft
+        TextPrimary  = '#E5E9F0'   # crispier wit
+        AccentBlue   = '#4FA3FF'   # vivid blauw
+        AccentGreen  = '#4ADE80'   # vivid groen
+        AccentRed    = '#FF6B7A'   # vivid rood
+        AccentYellow = '#FFD23F'   # vivid geel
+        ErrorBg      = '#3F1820'
+        WarnBg       = '#3F310B'
+    }
+    Light = @{
+        BgPrimary    = '#F3F3F3'
+        BgSecondary  = '#FFFFFF'
+        BgCard       = '#FAFAFA'
+        BorderColor  = '#D0D0D0'
+        TextMuted    = '#707070'
+        TextPrimary  = '#1F1F1F'
+        AccentBlue   = '#0078D4'
+        AccentGreen  = '#107C10'
+        AccentRed    = '#C50F1F'
+        AccentYellow = '#9A6700'
+        ErrorBg      = '#FDE7E9'
+        WarnBg       = '#FFF8C5'
+    }
+}
+
+function Get-WindowsTheme {
+    try {
+        $val = Get-ItemPropertyValue -Path 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'AppsUseLightTheme' -ErrorAction Stop
+        if ($val -eq 1) { return 'Light' } else { return 'Dark' }
+    } catch { return 'Dark' }
+}
+
+function Resolve-ActiveTheme {
+    param([string]$Preference)
+    if ($Preference -eq 'Auto' -or -not $Preference) { return Get-WindowsTheme }
+    if ($Script:Themes.ContainsKey($Preference)) { return $Preference }
+    return 'Dark'
+}
+
+function Apply-ThemeColors {
+    param([string]$xamlText, [string]$ThemeName)
+    $colors = $Script:Themes[$ThemeName]
+    # Mapping van dark-palette hexcodes (zoals in XAML) naar nieuwe waarden
+    $map = @{
+        '#1E1E2E' = $colors.BgPrimary
+        '#2A2A3E' = $colors.BgSecondary
+        '#313149' = $colors.BgCard
+        '#45475A' = $colors.BorderColor
+        '#6C7086' = $colors.TextMuted
+        '#CDD6F4' = $colors.TextPrimary
+        '#89B4FA' = $colors.AccentBlue
+        '#A6E3A1' = $colors.AccentGreen
+        '#F38BA8' = $colors.AccentRed
+        '#F9E2AF' = $colors.AccentYellow
+        '#3D1A1F' = $colors.ErrorBg
+        '#3D320A' = $colors.WarnBg
+    }
+    foreach ($from in $map.Keys) { $xamlText = $xamlText.Replace($from, $map[$from]) }
+    return $xamlText
+}
+
+# ---------------------------------------------------------------------------
+
+$ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
 
 [xml]$Xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -400,15 +473,16 @@ Set-LogObservable $LogCollection
                         </StackPanel>
                     </Border>
 
-                    <DataGrid x:Name="GridUpdates" Grid.Row="1" IsReadOnly="True" CanUserSortColumns="True">
+                    <DataGrid x:Name="GridUpdates" Grid.Row="1" CanUserSortColumns="True"
+                              SelectionMode="Extended">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged}"
+                            <DataGridCheckBoxColumn Header="" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                                     Width="36"/>
-                            <DataGridTextColumn Header="Naam"              Binding="{Binding Name}"             Width="230"/>
-                            <DataGridTextColumn Header="ID"                Binding="{Binding Id}"               Width="220"/>
-                            <DataGridTextColumn Header="Huidig"            Binding="{Binding Version}"          Width="110"/>
-                            <DataGridTextColumn Header="Beschikbaar"       Binding="{Binding AvailableVersion}" Width="110"/>
-                            <DataGridTextColumn Header="Bron"              Binding="{Binding Source}"           Width="100"/>
+                            <DataGridTextColumn Header="Naam"              Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="ID"                Binding="{Binding Id}"               Width="220" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Huidig"            Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Beschikbaar"       Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Bron"              Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -646,6 +720,19 @@ Set-LogObservable $LogCollection
                             </ComboBox>
                         </Grid>
 
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Thema:" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CmbSettingsTheme" Grid.Column="1">
+                                <ComboBoxItem Content="Auto" IsSelected="True"/>
+                                <ComboBoxItem Content="Dark"/>
+                                <ComboBoxItem Content="Light"/>
+                            </ComboBox>
+                        </Grid>
+
                         <CheckBox x:Name="ChkAutoUpdateCheck"
                                   Content="Controleer updates bij opstarten"
                                   IsChecked="True" Margin="0,4,0,4"/>
@@ -708,7 +795,11 @@ Set-LogObservable $LogCollection
 # Window laden
 # ---------------------------------------------------------------------------
 
-$Reader = [System.Xml.XmlNodeReader]::new($Xaml)
+# Theme altijd toepassen (ook Dark, want palette kan vibranter zijn dan XAML-base)
+$xamlString = $Xaml.OuterXml
+$xamlString = Apply-ThemeColors -xamlText $xamlString -ThemeName $ActiveTheme
+[xml]$ThemedXaml = $xamlString
+$Reader = [System.Xml.XmlNodeReader]::new($ThemedXaml)
 $Window = [System.Windows.Markup.XamlReader]::Load($Reader)
 
 # Helpers voor control-lookup
@@ -764,6 +855,7 @@ $TxtSettingsLogDir       = Get-Control 'TxtSettingsLogDir'
 $CmbSettingsLogLevel     = Get-Control 'CmbSettingsLogLevel'
 $TxtSettingsRetention    = Get-Control 'TxtSettingsRetention'
 $CmbSettingsScope        = Get-Control 'CmbSettingsScope'
+$CmbSettingsTheme        = Get-Control 'CmbSettingsTheme'
 $ChkAutoUpdateCheck      = Get-Control 'ChkAutoUpdateCheck'
 $ChkConfirmUninstall     = Get-Control 'ChkConfirmUninstall'
 $ChkConfirmUpdate        = Get-Control 'ChkConfirmUpdate'
@@ -801,6 +893,60 @@ function Set-UIEnabled {
 function Show-Info  { param($msg) [System.Windows.MessageBox]::Show($msg, "Info",    "OK", "Information") | Out-Null }
 function Show-Error { param($msg) [System.Windows.MessageBox]::Show($msg, "Fout",    "OK", "Error")       | Out-Null }
 function Ask-Confirm { param($msg) ([System.Windows.MessageBox]::Show($msg, "Bevestig", "YesNo", "Question")) -eq 'Yes' }
+
+# --- WinGet exit codes -> menselijke teksten + actie suggesties -------------
+$Script:WinGetErrors = @{
+    -1978335212 = @{ Msg = "Geen updates beschikbaar"; Action = 'none' }
+    -1978335189 = @{ Msg = "Geen pakketten gevonden voor deze ID"; Action = 'none' }
+    -1978335188 = @{ Msg = "Meerdere pakketten gevonden, ID is niet uniek"; Action = 'none' }
+    -1978335162 = @{ Msg = "Pakketovereenkomst niet geaccepteerd"; Action = 'none' }
+    -1978334969 = @{ Msg = "Onvoldoende rechten - update vereist administrator"; Action = 'elevate' }
+    -1978334964 = @{ Msg = "App draait nog en kan niet worden bijgewerkt"; Action = 'kill' }
+    -1978334960 = @{ Msg = "Hashverificatie mislukt - download corrupt"; Action = 'retry' }
+    -1978335211 = @{ Msg = "Internet niet beschikbaar"; Action = 'retry' }
+    -1978334968 = @{ Msg = "Schijf vol"; Action = 'none' }
+}
+
+function Get-WinGetErrorInfo {
+    param([int]$ExitCode)
+    if ($Script:WinGetErrors.ContainsKey($ExitCode)) {
+        return $Script:WinGetErrors[$ExitCode]
+    }
+    return @{ Msg = "WinGet exitcode $ExitCode"; Action = 'none' }
+}
+
+# Vind processen die waarschijnlijk bij dit pakket horen
+function Find-RelatedProcesses {
+    param(
+        [string]$PackageId,
+        [string]$PackageName
+    )
+
+    # Mogelijke namen afleiden: deel na laatste punt + naam zonder spaties
+    $candidates = New-Object System.Collections.Generic.HashSet[string]
+    if ($PackageId) {
+        $parts = $PackageId.Split('.')
+        $last  = $parts[-1]
+        if ($last) { [void]$candidates.Add($last.ToLower()) }
+        # ook publisher proberen
+        if ($parts.Count -gt 1) { [void]$candidates.Add($parts[0].ToLower()) }
+    }
+    if ($PackageName) {
+        [void]$candidates.Add(($PackageName -replace '\s','').ToLower())
+        # eerste woord
+        $first = ($PackageName -split '\s+')[0]
+        if ($first) { [void]$candidates.Add($first.ToLower()) }
+    }
+
+    $processes = Get-Process -ErrorAction SilentlyContinue | Where-Object {
+        $procName = $_.ProcessName.ToLower()
+        foreach ($c in $candidates) {
+            if ($c.Length -ge 4 -and ($procName -like "*$c*")) { return $true }
+        }
+        return $false
+    }
+    return @($processes | Select-Object -Unique ProcessName, Id)
+}
 
 # Start een winget-commando in achtergrond-runspace zodat de GUI niet bevriest
 function Start-WinGetWork {
@@ -913,6 +1059,10 @@ foreach ($item in $CmbSettingsLogLevel.Items) {
 foreach ($item in $CmbSettingsScope.Items) {
     if ($item.Content -eq $cfg.DefaultScope) { $CmbSettingsScope.SelectedItem = $item; break }
 }
+$themePref = if ($cfg.Theme) { $cfg.Theme } else { 'Auto' }
+foreach ($item in $CmbSettingsTheme.Items) {
+    if ($item.Content -eq $themePref) { $CmbSettingsTheme.SelectedItem = $item; break }
+}
 
 # Log binding
 $GridLogs.ItemsSource = $LogCollection
@@ -990,7 +1140,8 @@ $BtnInstallSelected.Add_Click({
             Set-Status "Installatie geslaagd"
             Refresh-Installed
         } else {
-            Show-Error "Installatie mislukt (code $exit)"
+            $info = Get-WinGetErrorInfo $exit
+            Show-Error "Installatie mislukt: $($info.Msg)"
             Set-Status "Installatie mislukt"
         }
     }.GetNewClosure()
@@ -1087,18 +1238,40 @@ $BtnUninstallSelected.Add_Click({
     if ($cfg.ConfirmUninstall -and -not (Ask-Confirm "Verwijder '$($pkg.Name)'?")) { return }
 
     $name = $pkg.Name; $id = $pkg.Id
-    $args = @('uninstall','--id',$id,'--exact','--silent','--disable-interactivity')
+    $cmdArgs = @('uninstall','--id',$id,'--exact','--silent','--disable-interactivity')
 
-    Start-WinGetWork -WinGetArgs $args -BusyMessage "Verwijderen: $name..." -OnDone {
-        param($exit, $output)
-        if ($exit -eq 0) {
-            Set-Status "Verwijderd"
-            Refresh-Installed
-        } else {
-            Show-Error "Verwijderen mislukt (code $exit)"
+    $doUninstall = $null
+    $doUninstall = {
+        param([bool]$AfterKill = $false)
+        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Verwijderen: $name..." -OnDone {
+            param($exit, $output)
+            if ($exit -eq 0) {
+                Set-Status "Verwijderd"
+                Refresh-Installed
+                return
+            }
+            $info = Get-WinGetErrorInfo $exit
+
+            if ($info.Action -eq 'kill' -and -not $AfterKill) {
+                $procs = Find-RelatedProcesses -PackageId $id -PackageName $name
+                if ($procs.Count -gt 0) {
+                    $procList = ($procs | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join "`n  - "
+                    if (Ask-Confirm "Verwijderen mislukt: $name draait nog.`n`nGedetecteerde processen:`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
+                        $procs | ForEach-Object {
+                            try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
+                        }
+                        Start-Sleep -Seconds 2
+                        & $doUninstall -AfterKill $true
+                        return
+                    }
+                }
+            }
+            Show-Error "Verwijderen van $name mislukt: $($info.Msg)"
             Set-Status "Mislukt"
-        }
+        }.GetNewClosure()
     }.GetNewClosure()
+
+    & $doUninstall
 })
 
 $BtnUpdateSelectedInstalled.Add_Click({
@@ -1106,19 +1279,47 @@ $BtnUpdateSelectedInstalled.Add_Click({
     if (-not $pkg) { return }
 
     $name = $pkg.Name; $id = $pkg.Id
-    $args = @('upgrade','--id',$id,'--exact','--silent',
-              '--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
+    $cmdArgs = @('upgrade','--id',$id,'--exact','--silent',
+                 '--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
 
-    Start-WinGetWork -WinGetArgs $args -BusyMessage "Updaten: $name..." -OnDone {
-        param($exit, $output)
-        if ($exit -eq 0) {
-            Set-Status "Update van $name geslaagd"
-            Refresh-Installed
-        } else {
-            Show-Error "Update van $name mislukt (code $exit)"
+    $doUpdate = $null
+    $doUpdate = {
+        param([bool]$AfterKill = $false)
+        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Updaten: $name..." -OnDone {
+            param($exit, $output)
+            if ($exit -eq 0) {
+                Set-Status "Update van $name geslaagd"
+                Refresh-Installed
+                return
+            }
+            $info = Get-WinGetErrorInfo $exit
+
+            if ($info.Action -eq 'kill' -and -not $AfterKill) {
+                $procs = Find-RelatedProcesses -PackageId $id -PackageName $name
+                if ($procs.Count -gt 0) {
+                    $procList = ($procs | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join "`n  - "
+                    if (Ask-Confirm "Update mislukt: $name draait nog.`n`nGedetecteerde processen:`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
+                        Write-Log "Sluiten en retry: $($procs.Count) processen voor $name" -Source GUI
+                        $procs | ForEach-Object {
+                            try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {}
+                        }
+                        Start-Sleep -Seconds 2
+                        & $doUpdate -AfterKill $true
+                        return
+                    }
+                } else {
+                    Show-Error "$name draait nog maar geen process gevonden. Sluit de app handmatig en probeer opnieuw."
+                }
+            } elseif ($info.Action -eq 'elevate') {
+                Show-Error "$name vereist administrator-rechten. Start WinGetManager.exe als administrator en probeer opnieuw."
+            } else {
+                Show-Error "Update van $name mislukt: $($info.Msg)"
+            }
             Set-Status "Update mislukt"
-        }
+        }.GetNewClosure()
     }.GetNewClosure()
+
+    & $doUpdate
 })
 
 # ---------------------------------------------------------------------------
@@ -1383,11 +1584,26 @@ $BtnSaveSettings.Add_Click({
         Set-ConfigValue -Key 'LogLevel'               -Value $CmbSettingsLogLevel.SelectedItem.Content
         Set-ConfigValue -Key 'LogRetentionDays'       -Value ([int]$TxtSettingsRetention.Text)
         Set-ConfigValue -Key 'DefaultScope'           -Value $CmbSettingsScope.SelectedItem.Content
+        $newTheme = $CmbSettingsTheme.SelectedItem.Content
+        Set-ConfigValue -Key 'Theme'                  -Value $newTheme
         Set-ConfigValue -Key 'AutoUpdateCheckOnStart' -Value $ChkAutoUpdateCheck.IsChecked
         Set-ConfigValue -Key 'ConfirmUninstall'       -Value $ChkConfirmUninstall.IsChecked
         Set-ConfigValue -Key 'ConfirmUpdate'          -Value $ChkConfirmUpdate.IsChecked
         Set-ConfigValue -Key 'SelfUpdateUrl'          -Value $TxtSettingsUpdateUrl.Text.Trim()
         $script:cfg = Get-AppConfig
+
+        # Detecteer theme-wijziging en bied herstart aan
+        $newActiveTheme = Resolve-ActiveTheme -Preference $newTheme
+        if ($newActiveTheme -ne $ActiveTheme) {
+            Write-Log "Thema gewijzigd: $ActiveTheme -> $newActiveTheme" -Source GUI
+            if (Ask-Confirm "Het thema is gewijzigd. App nu herstarten om de wijziging toe te passen?") {
+                $exePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+                Start-Process -FilePath $exePath
+                $Window.Close()
+                return
+            }
+        }
+
         Show-Info "Instellingen opgeslagen."
         Write-Log "Instellingen opgeslagen" -Source GUI
     } catch {
