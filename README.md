@@ -108,27 +108,43 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-### ✅ Klaar (v0.2.x)
-- Dark / Light / Auto theme
-- Async UI (geen freezes)
-- Auto-close apps die updates blokkeren
-- Multi-select bulk uninstall / update
-- Search-as-you-type
-- Self-update via GitHub Releases
-- GitHub Actions auto-build + release pipeline
-- Portable + Inno Setup installer distributie
+### ✅ v0.2.x (huidige stable)
+- [x] Dark / Light / Auto theme (volgt Windows-systeemvoorkeur)
+- [x] Async UI met live progress feedback
+- [x] Auto-detectie en sluiten van apps die updates blokkeren
+- [x] Multi-select bulk uninstall / update in Geïnstalleerd-tab
+- [x] Search-as-you-type met debouncing
+- [x] Self-update via GitHub Releases API
+- [x] Security: HTTPS-only updates, PE-header validatie
+- [x] GitHub Actions auto-build + release pipeline
+- [x] Portable + Inno Setup installer distributie
 
-### 🚧 Komende versies
-- [ ] System tray-icoon met snelle update-actie
-- [ ] Toast-notificaties bij voltooide updates
-- [ ] Package details paneel (klik → side-panel met info)
-- [ ] Engelse vertaling (i18n)
-- [ ] Keyboard shortcuts (Ctrl+F, F5, Esc)
+### 🚧 v0.3.0 — UX polish
+- [ ] System tray-icoon (minimaliseren naar tray, achtergrond update-check)
+- [ ] Windows toast-notificaties bij voltooide updates
+- [ ] Keyboard shortcuts (`Ctrl+F` zoek, `F5` ververs, `Esc` annuleer, `Ctrl+R` updates)
+- [ ] Cancel-knop voor lopende bulk-operaties
+- [ ] Package details paneel (klik op item → zijbalk met beschrijving, uitgever, links)
+- [ ] "Don't ask again"-optie bij confirmaties
 
-### 🎯 Strategisch
-- [ ] Microsoft Store distributie ($19 — lost SmartScreen + Smart App Control op)
-- [ ] Submit naar `winget-pkgs` (`winget install WinGetManager`)
-- [ ] SignPath code-signing (gratis voor OSS)
+### 🌍 v0.4.0 — Multi-language
+- [ ] **Engelse vertaling** (i18n infrastructuur + EN-US locale)
+- [ ] Taal-keuze in Settings tab (NL / EN / Auto)
+- [ ] Vertaal-bestanden in `i18n/<locale>.json` formaat
+- [ ] Documentatie ook in EN (README, CHANGELOG)
+
+### 🎯 v1.0.0 — Distributie + signing
+- [ ] **Microsoft Store** submit ($19 eenmalig — lost SmartScreen + Smart App Control op)
+- [ ] **`winget-pkgs`** manifest indienen — daarna `winget install WinGetManager`
+- [ ] **SignPath** code-signing (gratis voor OSS) — onbekende-uitgever waarschuwing weg
+- [ ] Officiële website / GitHub Pages docs
+
+### 💡 Ideeën (nog niet ingepland)
+- "Recent geüpdate" history-tab
+- Custom WinGet-bron-templates
+- Backup/restore van app-data per pakket
+- Schedule per-package (sommige apps wekelijks ipv. dagelijks updaten)
+- Comparison view: lokale machine vs. exported config van andere PC
 
 ## Licentie
 
