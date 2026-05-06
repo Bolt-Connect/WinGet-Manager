@@ -270,7 +270,7 @@ $ps2exeArgs = @{
     Description   = "WinGet Package Manager met GUI"
     Company       = "Bolt-Connect"
     Product       = "WinGet Manager"
-    Version       = "0.2.0.0"
+    Version       = "0.2.1.0"
     NoConsole     = $true
     STA           = $true
 }

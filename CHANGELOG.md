@@ -11,6 +11,23 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ---
 
+## [0.2.1] - 2026-05-06
+
+### Toegevoegd
+- README-badges: build status, latest release, downloads count, license.
+- Directe download-links in README via stabiele `/releases/latest/download/` URL-patroon — werkt automatisch voor elke nieuwe release zonder de README te updaten.
+- `CLAUDE.md` met project-context voor AI-assistenten (Claude Code, Cursor, Copilot).
+
+### Gewijzigd
+- GitHub Actions uploadt nu zowel versioned (`WinGetManager-Setup-0.2.1.exe`) als stabiele (`WinGetManager-Setup.exe`) filenames per release.
+- Hetzelfde voor portable zip: `WinGetManager-v0.2.1-portable.zip` + `WinGetManager-portable.zip`.
+- README-installatie-sectie vereenvoudigd: nu duidelijke vergelijking van Setup vs Portable vs Bundle.
+
+### Opgelost
+- v0.2.0 release miste de stabiele `WinGetManager-Setup.exe` filename — direct-download links in README pointten naar 404 voor de installer. Vanaf 0.2.1 werken alle `/releases/latest/download/...` URLs.
+
+---
+
 ## [0.2.0] - 2026-05-06
 
 ### Toegevoegd
@@ -57,6 +74,7 @@ Eerste publieke release.
 - Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
 - SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.1.0

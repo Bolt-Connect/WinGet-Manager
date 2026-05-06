@@ -67,6 +67,9 @@ jobs:
           $version = "${{ github.ref_name }}".TrimStart('v')
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer\WinGetManager.iss
 
+          # Maak ook stabiele filename (zonder versie) voor /releases/latest/download/ URL
+          Copy-Item "release\WinGetManager-Setup-$version.exe" "release\WinGetManager-Setup.exe"
+
       - name: Portable zip maken
         if: startsWith(github.ref, 'refs/tags/v')
         shell: powershell
@@ -78,7 +81,11 @@ jobs:
           Copy-Item -Recurse 'build\config' $bundleDir
           Copy-Item 'README.md' $bundleDir
           Copy-Item 'LICENSE' $bundleDir
+
+          # Versioned naam voor archief
           Compress-Archive -Path "$bundleDir\*" -DestinationPath "release\WinGetManager-$version-portable.zip" -Force
+          # Stabiele naam voor /releases/latest/download/ URL
+          Copy-Item "release\WinGetManager-$version-portable.zip" "release\WinGetManager-portable.zip"
 
       - name: GitHub Release publiceren
         if: startsWith(github.ref, 'refs/tags/v')
@@ -87,7 +94,9 @@ jobs:
           files: |
             build/WinGetManager.exe
             release/WinGetManager-Setup-*.exe
+            release/WinGetManager-Setup.exe
             release/WinGetManager-${{ github.ref_name }}-portable.zip
+            release/WinGetManager-portable.zip
           generate_release_notes: true
           draft: false
           prerelease: false

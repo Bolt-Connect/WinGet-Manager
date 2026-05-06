@@ -1,10 +1,22 @@
 # WinGet Manager
 
-Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark-theme interface en silent mode voor automatisering. Geschreven in PowerShell + WPF, gecompileerd naar één enkele `.exe`.
+Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en silent mode voor automatisering. Geschreven in PowerShell + WPF, gecompileerd naar één enkele `.exe`.
 
-![Status](https://img.shields.io/badge/status-alpha-orange)
-![License](https://img.shields.io/badge/license-MIT-blue)
+[![Latest Release](https://img.shields.io/github/v/release/Bolt-Connect/WinGetManager?label=release&color=blue)](https://github.com/Bolt-Connect/WinGetManager/releases/latest)
+[![Build & Release](https://github.com/Bolt-Connect/WinGetManager/actions/workflows/build.yml/badge.svg)](https://github.com/Bolt-Connect/WinGetManager/actions/workflows/build.yml)
+[![Downloads](https://img.shields.io/github/downloads/Bolt-Connect/WinGetManager/total?color=green)](https://github.com/Bolt-Connect/WinGetManager/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Platform](https://img.shields.io/badge/windows-10%2B-0078D6)
+
+## ⬇ Download
+
+| Type | Link |
+|---|---|
+| **Portable** (single-file, geen install) | [WinGetManager.exe](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager.exe) |
+| **Setup installer** (met Start-menu, uninstaller) | [WinGetManager-Setup.exe](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager-Setup.exe) |
+| **Portable bundle** (incl. config + docs) | [WinGetManager-portable.zip](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager-portable.zip) |
+
+[Alle releases →](https://github.com/Bolt-Connect/WinGetManager/releases)
 
 ---
 
@@ -31,30 +43,21 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark-theme interfac
 
 ## Installatie
 
-### Optie 1 — Setup installer (aanbevolen)
+Zie de **⬇ Download**-sectie hierboven voor directe links naar de drie distributievormen.
 
-Download `WinGetManager-Setup-x.y.z.exe` van de [Releases-pagina](../../releases) en doorloop de wizard. De installer:
+| Type | Wanneer kiezen |
+|---|---|
+| **Setup installer** | Reguliere installatie zoals Notepad++/7-Zip — Start-menu, uninstaller, Add/Remove Programs |
+| **Portable** | USB-stick, draaien zonder install, geen sporen op systeem |
+| **Portable bundle** | Hele zip met config + docs — handig voor offline-distributie |
 
-- Plaatst de app in `Program Files\WinGetManager\` of in een andere gekozen locatie
-- Maakt een Start-menu en (optioneel) bureaublad-snelkoppeling
-- Optioneel een dagelijkse Task Scheduler voor auto-update
-- Verschijnt netjes in **Configuratiescherm → Programma's** met uninstaller
-
-### Optie 2 — Portable
-
-1. Download `WinGetManager.exe` (alleenstaand bestand) van de [Releases-pagina](../../releases)
-2. Plaats in een map naar keuze
-3. Dubbelklik — config en logs worden automatisch naast de exe aangemaakt
-
-Voor offline-distributie kan ook de portable zip (`WinGetManager-vX.Y.Z-portable.zip`) gebruikt worden.
-
-### Optie 3 — Vanuit source bouwen
+### Vanuit source bouwen
 
 ```powershell
 git clone https://github.com/Bolt-Connect/WinGetManager.git
 cd WinGetManager
 .\Build.bat                              # bouwt build\WinGetManager.exe
-.\Build-Installer.ps1 -Version 0.1.0     # optioneel: maakt release\WinGetManager-Setup-0.1.0.exe
+.\Build-Installer.ps1 -Version 0.2.0     # optioneel: maakt release\WinGetManager-Setup-0.2.0.exe
 ```
 
 Voor de installer is [Inno Setup 6](https://jrsoftware.org/isdl.php) nodig (`winget install JRSoftware.InnoSetup`).
