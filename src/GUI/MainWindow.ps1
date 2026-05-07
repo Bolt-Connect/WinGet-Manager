@@ -366,7 +366,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
         <TabControl x:Name="MainTabs" Grid.Row="1" Margin="0">
 
             <!-- ─ Tab 1: Zoeken & Installeren ─ -->
-            <TabItem Header="🔍  Zoeken">
+            <TabItem x:Name="TabSearch" Header="🔍  Zoeken">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -395,16 +395,23 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 Style="{StaticResource BtnGhost}"/>
                     </Grid>
 
-                    <!-- Resultatenlijst -->
-                    <DataGrid x:Name="GridSearch" Grid.Row="1" IsReadOnly="True"
-                              SelectionMode="Single" CanUserSortColumns="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Naam"    Binding="{Binding Name}"    Width="250"/>
-                            <DataGridTextColumn Header="ID"      Binding="{Binding Id}"      Width="250"/>
-                            <DataGridTextColumn Header="Versie"  Binding="{Binding Version}" Width="100"/>
-                            <DataGridTextColumn Header="Bron"    Binding="{Binding Source}"  Width="100"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <!-- Resultatenlijst + empty state overlay -->
+                    <Grid Grid.Row="1">
+                        <DataGrid x:Name="GridSearch" IsReadOnly="True"
+                                  SelectionMode="Single" CanUserSortColumns="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Naam"    Binding="{Binding Name}"    Width="250"/>
+                                <DataGridTextColumn Header="ID"      Binding="{Binding Id}"      Width="250"/>
+                                <DataGridTextColumn Header="Versie"  Binding="{Binding Version}" Width="100"/>
+                                <DataGridTextColumn Header="Bron"    Binding="{Binding Source}"  Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="EmptySearch"
+                                   Text="🔍  Typ minimaal 2 tekens om te zoeken"
+                                   Foreground="#6C7086" FontSize="14"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                    </Grid>
 
                     <!-- Actieknoppen -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
@@ -417,7 +424,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 2: Geïnstalleerd ─ -->
-            <TabItem Header="📦  Geïnstalleerd">
+            <TabItem x:Name="TabInstalled" Header="📦  Geïnstalleerd">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -435,25 +442,32 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 Content="↺ Vernieuwen" Style="{StaticResource BtnBlue}"/>
                     </Grid>
 
-                    <DataGrid x:Name="GridInstalled" Grid.Row="1" IsReadOnly="True" CanUserSortColumns="True"
-                              SelectionMode="Extended">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Naam"        Binding="{Binding Name}"             Width="220"/>
-                            <DataGridTextColumn Header="ID"          Binding="{Binding Id}"               Width="230"/>
-                            <DataGridTextColumn Header="Versie"      Binding="{Binding Version}"          Width="110"/>
-                            <DataGridTextColumn Header="Beschikbaar" Binding="{Binding AvailableVersion}" Width="110"/>
-                            <DataGridTextColumn Header="Bron"        Binding="{Binding Source}"           Width="100"/>
-                        </DataGrid.Columns>
-                        <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasUpdate}" Value="True">
-                                        <Setter Property="Foreground" Value="#A6E3A1"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGrid.RowStyle>
-                    </DataGrid>
+                    <Grid Grid.Row="1">
+                        <DataGrid x:Name="GridInstalled" IsReadOnly="True" CanUserSortColumns="True"
+                                  SelectionMode="Extended">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Naam"        Binding="{Binding Name}"             Width="220"/>
+                                <DataGridTextColumn Header="ID"          Binding="{Binding Id}"               Width="230"/>
+                                <DataGridTextColumn Header="Versie"      Binding="{Binding Version}"          Width="110"/>
+                                <DataGridTextColumn Header="Beschikbaar" Binding="{Binding AvailableVersion}" Width="110"/>
+                                <DataGridTextColumn Header="Bron"        Binding="{Binding Source}"           Width="100"/>
+                            </DataGrid.Columns>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                            <Setter Property="Foreground" Value="#A6E3A1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                        </DataGrid>
+                        <TextBlock x:Name="EmptyInstalled"
+                                   Text="📦  Bezig met laden..."
+                                   Foreground="#6C7086" FontSize="14"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                    </Grid>
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
                         <TextBlock x:Name="TxtInstalledCount" Foreground="#6C7086" FontSize="12"
@@ -467,7 +481,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 3: Updates ─ -->
-            <TabItem Header="⬆  Updates">
+            <TabItem x:Name="TabUpdates" Header="⬆  Updates">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -492,18 +506,25 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         </StackPanel>
                     </Border>
 
-                    <DataGrid x:Name="GridUpdates" Grid.Row="1" CanUserSortColumns="True"
-                              SelectionMode="Extended">
-                        <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                                                    Width="36"/>
-                            <DataGridTextColumn Header="Naam"              Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="ID"                Binding="{Binding Id}"               Width="220" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Huidig"            Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Beschikbaar"       Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Bron"              Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <Grid Grid.Row="1">
+                        <DataGrid x:Name="GridUpdates" CanUserSortColumns="True"
+                                  SelectionMode="Extended">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                                        Width="36"/>
+                                <DataGridTextColumn Header="Naam"              Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="ID"                Binding="{Binding Id}"               Width="220" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Huidig"            Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Beschikbaar"       Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Bron"              Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="EmptyUpdates"
+                                   Text="✓  Alle packages zijn up-to-date 🎉"
+                                   Foreground="#A6E3A1" FontSize="14"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                    </Grid>
 
                     <!-- Voortgangsbalk -->
                     <ProgressBar x:Name="UpdateProgress" Grid.Row="2" Margin="0,12,0,0"
@@ -579,24 +600,54 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 5: Bronnen ─ -->
-            <TabItem Header="🔗  Bronnen">
+            <TabItem x:Name="TabSources" Header="🔗  Bronnen">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <DataGrid x:Name="GridSources" Grid.Row="0" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Naam" Binding="{Binding Name}" Width="150"/>
-                            <DataGridTextColumn Header="URL"  Binding="{Binding Url}"  Width="*"/>
-                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="180"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <Border Grid.Row="0" Background="#313149" CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock FontSize="13" Foreground="#CDD6F4" TextWrapping="Wrap">
+                                <Run Text="Bronnen zijn de pakketten-repos die WinGet gebruikt. " FontWeight="SemiBold"/>
+                                <Run Text="Standaard staan er twee:"/>
+                            </TextBlock>
+                            <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap" Margin="0,6,0,0">
+                                <Run Text="• "/>
+                                <Run Text="winget" FontWeight="SemiBold" Foreground="#89B4FA"/>
+                                <Run Text=" — Microsofts officiele community-repo (~6000 apps zoals Firefox, Chrome, VSCode)"/>
+                            </TextBlock>
+                            <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap">
+                                <Run Text="• "/>
+                                <Run Text="msstore" FontWeight="SemiBold" Foreground="#89B4FA"/>
+                                <Run Text=" — Microsoft Store apps (Spotify, WhatsApp, Netflix, etc.)"/>
+                            </TextBlock>
+                            <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap" Margin="0,8,0,0">
+                                <Run Text="Hier kun je een eigen bron toevoegen (bijvoorbeeld een corporate-repo), bestaande bronnen verwijderen, of resetten naar de standaard."/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Row="1">
+                        <DataGrid x:Name="GridSources" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Naam" Binding="{Binding Name}" Width="150"/>
+                                <DataGridTextColumn Header="URL"  Binding="{Binding Url}"  Width="*"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="180"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="EmptySources"
+                                   Text="🔗  Geen bronnen geconfigureerd"
+                                   Foreground="#6C7086" FontSize="14"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsHitTestVisible="False" Visibility="Collapsed"/>
+                    </Grid>
 
                     <!-- Nieuwe bron toevoegen -->
-                    <Border Grid.Row="1" Background="#313149" CornerRadius="8"
+                    <Border Grid.Row="2" Background="#313149" CornerRadius="8"
                             Padding="16" Margin="0,16,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -622,7 +673,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         </Grid>
                     </Border>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
                         <Button x:Name="BtnRefreshSources" Content="↺ Vernieuwen"
                                 Style="{StaticResource BtnGhost}" Margin="0,0,8,0"/>
                         <Button x:Name="BtnRemoveSource" Content="🗑 Verwijderen"
@@ -935,6 +986,14 @@ $AdminBadge              = Get-Control 'AdminBadge'
 $BtnCheckUpdates         = Get-Control 'BtnCheckUpdates'
 $BtnSelfUpdate           = Get-Control 'BtnSelfUpdate'
 $MainTabs                = Get-Control 'MainTabs'
+$TabSearch               = Get-Control 'TabSearch'
+$TabInstalled            = Get-Control 'TabInstalled'
+$TabUpdates              = Get-Control 'TabUpdates'
+$TabSources              = Get-Control 'TabSources'
+$EmptySearch             = Get-Control 'EmptySearch'
+$EmptyInstalled          = Get-Control 'EmptyInstalled'
+$EmptyUpdates            = Get-Control 'EmptyUpdates'
+$EmptySources            = Get-Control 'EmptySources'
 
 # ---------------------------------------------------------------------------
 # Hulpfuncties UI-thread
@@ -1254,9 +1313,15 @@ function Invoke-LiveSearch {
             $current = $TxtSearch.Text.Trim()
             if ($r -and $r.Query -eq $current) {
                 $lines = $r.Output -split "`r?`n"
-                $results = Parse-PackageText $lines
-                $GridSearch.ItemsSource = @($results)
+                $results = @(Parse-PackageText $lines)
+                $GridSearch.ItemsSource = $results
                 Set-Status "$($results.Count) resultaten voor '$($r.Query)'"
+                if ($results.Count -eq 0) {
+                    $EmptySearch.Text = "🔍  Geen resultaten voor '$($r.Query)'"
+                    $EmptySearch.Visibility = 'Visible'
+                } else {
+                    $EmptySearch.Visibility = 'Collapsed'
+                }
             }
         } catch {
             Write-Log "Live search fout: $_" -Level WARN -Source GUI
@@ -1270,6 +1335,12 @@ function Invoke-LiveSearch {
 
 # TextChanged: debounce 400ms tussen toetsaanslagen
 $TxtSearch.Add_TextChanged({
+    # Reset empty-state bij elke wijziging
+    if ($TxtSearch.Text.Trim().Length -lt 2) {
+        $EmptySearch.Text = "🔍  Typ minimaal 2 tekens om te zoeken"
+        $EmptySearch.Visibility = 'Visible'
+        $GridSearch.ItemsSource = $null
+    }
     if ($Script:SearchDebounce) { $Script:SearchDebounce.Stop() }
 
     if (-not $TxtSearch.Text.Trim()) {
@@ -1397,9 +1468,17 @@ function Refresh-Installed {
 
         $Script:AllInstalled = @($merged | Where-Object { $_ })
         Apply-InstalledFilter
+        $count = $Script:AllInstalled.Count
         $upgradable = @($Script:AllInstalled | Where-Object { $_.HasUpdate }).Count
-        $TxtInstalledCount.Text = "$($Script:AllInstalled.Count) packages, $upgradable updatebaar"
-        Write-Log "Geïnstalleerd geladen: $($Script:AllInstalled.Count) ($upgradable met update)" -Source GUI
+        $TxtInstalledCount.Text = "$count packages, $upgradable updatebaar"
+        $TabInstalled.Header = "📦  Geïnstalleerd ($count)"
+        if ($count -eq 0) {
+            $EmptyInstalled.Text = "📦  Geen packages gevonden"
+            $EmptyInstalled.Visibility = 'Visible'
+        } else {
+            $EmptyInstalled.Visibility = 'Collapsed'
+        }
+        Write-Log "Geïnstalleerd geladen: $count ($upgradable met update)" -Source GUI
         Set-Status "Gereed"
     } catch {
         Set-Status "Fout"
@@ -1626,15 +1705,22 @@ function Refresh-Updates {
     $GridUpdates.ItemsSource = $null
     try {
         $raw = Get-WinGetUpdates
-        $Script:UpdateablePackages = $raw | ForEach-Object {
+        $Script:UpdateablePackages = @($raw | ForEach-Object {
             $_ | Add-Member -NotePropertyName Selected -NotePropertyValue $false -PassThru
-        }
+        })
         $GridUpdates.ItemsSource = @($Script:UpdateablePackages)
-        $TxtUpdateCount.Text     = $Script:UpdateablePackages.Count
+        $count = $Script:UpdateablePackages.Count
+        $TxtUpdateCount.Text     = $count
         $TxtWinGetVersion.Text   = Get-WinGetVersion
-        $BtnUpdateSelected.IsEnabled = $Script:UpdateablePackages.Count -gt 0
-        Set-Status "$(($Script:UpdateablePackages).Count) update(s) gevonden"
-        Write-Log "Updates: $($Script:UpdateablePackages.Count)" -Source GUI
+        $BtnUpdateSelected.IsEnabled = $count -gt 0
+        $TabUpdates.Header = if ($count -gt 0) { "⬆  Updates ($count)" } else { "⬆  Updates" }
+        if ($count -eq 0) {
+            $EmptyUpdates.Visibility = 'Visible'
+        } else {
+            $EmptyUpdates.Visibility = 'Collapsed'
+        }
+        Set-Status "$count update(s) gevonden"
+        Write-Log "Updates: $count" -Source GUI
     } catch {
         Set-Status "Fout bij controleren"
         $TxtUpdateCount.Text = "!"
@@ -1792,7 +1878,15 @@ $BtnImport.Add_Click({
 function Refresh-Sources {
     $GridSources.ItemsSource = $null
     try {
-        $GridSources.ItemsSource = @(Get-WinGetSources)
+        $sources = @(Get-WinGetSources)
+        $GridSources.ItemsSource = $sources
+        $count = $sources.Count
+        $TabSources.Header = if ($count -gt 0) { "🔗  Bronnen ($count)" } else { "🔗  Bronnen" }
+        if ($count -eq 0) {
+            $EmptySources.Visibility = 'Visible'
+        } else {
+            $EmptySources.Visibility = 'Collapsed'
+        }
         Set-Status "Bronnen geladen"
     } catch {
         Write-Log "Bronnen laden mislukt: $_" -Level ERROR -Source GUI

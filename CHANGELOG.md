@@ -11,6 +11,20 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ---
 
+## [0.2.3] - 2026-05-07
+
+### Toegevoegd
+- **Tab-badges met telling**: tabs tonen nu het aantal items per categorie, bijv. `📦 Geïnstalleerd (147)`, `⬆ Updates (3)`, `🔗 Bronnen (2)`. Updates en Bronnen tonen alleen een teller bij ≥1 item.
+- **Empty-state berichten** in alle DataGrids:
+  - Zoeken (geen tekst): "🔍 Typ minimaal 2 tekens om te zoeken"
+  - Zoeken (geen match): "🔍 Geen resultaten voor 'xyz'"
+  - Geïnstalleerd (leeg): "📦 Geen packages gevonden"
+  - Updates (leeg): "✓ Alle packages zijn up-to-date 🎉" (groen)
+  - Bronnen (leeg): "🔗 Geen bronnen geconfigureerd"
+- **Info-card op Bronnen-tab** met uitleg wat `winget` en `msstore` zijn en wat je hier kunt doen.
+
+---
+
 ## [0.2.2] - 2026-05-06
 
 ### Toegevoegd
@@ -96,7 +110,8 @@ Eerste publieke release.
 - Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
 - SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.3
 [0.2.2]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.0
