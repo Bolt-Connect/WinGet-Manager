@@ -64,8 +64,25 @@ Build-Exe.ps1          Bundelt naar single .exe via PS2EXE
 ## Lokaal bouwen
 
 ```powershell
-.\Build.bat
-.\build\WinGetManager.exe
+git clone https://github.com/Bolt-Connect/WinGetManager.git
+cd WinGetManager
+.\Build.bat                              # bouwt build\WinGetManager.exe
+.\build\WinGetManager.exe                # start lokaal gebouwde versie
+```
+
+### Setup-installer maken
+
+Voor de Inno Setup installer is [Inno Setup 6](https://jrsoftware.org/isdl.php) nodig:
+
+```powershell
+winget install JRSoftware.InnoSetup
+.\Build-Installer.ps1 -Version 0.2.2     # output: release\WinGetManager-Setup-0.2.2.exe
+```
+
+### Icoon regenereren
+
+```powershell
+.\Generate-Icon.ps1                      # output: assets\icon.ico
 ```
 
 ## Vragen?

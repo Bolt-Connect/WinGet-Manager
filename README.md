@@ -66,21 +66,6 @@ Voor een **dagelijkse auto-update** taak in Task Scheduler:
 .\Install-ScheduledUpdate.ps1 -Time "03:00"
 ```
 
-## Vanuit source bouwen
-
-```powershell
-git clone https://github.com/Bolt-Connect/WinGetManager.git
-cd WinGetManager
-.\Build.bat                              # bouwt build\WinGetManager.exe
-.\Build-Installer.ps1 -Version 0.2.1     # optioneel: maakt release\WinGetManager-Setup-0.2.1.exe
-```
-
-Voor de Setup-installer is [Inno Setup 6](https://jrsoftware.org/isdl.php) nodig:
-
-```powershell
-winget install JRSoftware.InnoSetup
-```
-
 ## Bijdragen
 
 Issues en pull requests zijn welkom. Zie:
