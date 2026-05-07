@@ -115,12 +115,19 @@ installer/             Inno Setup script
 - [ ] Cancel-knop voor lopende bulk-operaties
 - [ ] Package details paneel (klik op item → zijbalk met beschrijving, uitgever, links)
 
-### 🎯 v1.0.0 — Eerste stabiele release
-- [ ] **SignPath code-signing** ([Open Source Program](https://signpath.org/)) — gratis voor OSS, lost SmartScreen "Unknown publisher" warnings op
-- [ ] Real-world bug fixes na publieke 0.3.0 release
+### 🧪 v0.4.0 — Test-fase + signing
+- [ ] **SignPath aanvragen** via Open Source Program ([signpath.org/foundation](https://signpath.org/foundation))
+- [ ] CI/CD pipeline aanpassen voor signing in GitHub Actions
+- [ ] Test-builds met gesigneerde EXE → controleren dat SmartScreen geen warning meer toont
+- [ ] Volledige test-pass over alle features op verschillende Windows-versies (10 / 11)
+- [ ] Beta-testers werven (Reddit r/Windows, r/PowerShell) en feedback verzamelen
+- [ ] Bug reports verwerken tot alles stabiel werkt
+
+### 🎯 v1.0.0 — Eerste stabiele release (release candidate na geslaagde v0.4 test)
+- [ ] Alleen uitgebracht nadat v0.4.x test-fase volledig groen is
 - [ ] Documentatie completeren (screenshots, getting-started gids)
-- [ ] Volledige testing-pass over alle features
 - [ ] Polish van details die opvallen bij regulier gebruik
+- [ ] Officiele go-live aankondiging
 
 ### 🌍 v1.1.0 — Multi-language
 - [ ] **Engelse vertaling** (i18n infrastructuur + EN-US locale)
