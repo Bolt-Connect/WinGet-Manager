@@ -141,6 +141,10 @@ installer/             Inno Setup script
 - [ ] Vertaal-bestanden in `i18n/<locale>.json` formaat
 - [ ] Documentatie ook in EN (README, CHANGELOG)
 
+### 🛠 v1.2.0 — Admin / Enterprise tools
+- [ ] Intune Win32-package generator (install.cmd, detection, uninstall)
+- [ ] *... meer admin-features volgen, nog uit te denken*
+
 ### 💡 Ideeën (nog niet ingepland)
 - "Recent geüpdate" history-tab
 - Custom WinGet-bron-templates
