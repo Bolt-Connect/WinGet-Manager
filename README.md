@@ -116,6 +116,7 @@ installer/             Inno Setup script
 - [ ] Package details paneel (klik op item → zijbalk met beschrijving, uitgever, links)
 
 ### 🎯 v1.0.0 — Eerste stabiele release
+- [ ] **SignPath code-signing** ([Open Source Program](https://signpath.org/)) — gratis voor OSS, lost SmartScreen "Unknown publisher" warnings op
 - [ ] Real-world bug fixes na publieke 0.3.0 release
 - [ ] Documentatie completeren (screenshots, getting-started gids)
 - [ ] Volledige testing-pass over alle features
