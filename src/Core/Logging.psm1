@@ -3,6 +3,7 @@
 $Script:LogPath       = $null
 $Script:MinLogLevel   = 'INFO'
 $Script:LogObservable = $null   # System.Collections.ObjectModel.ObservableCollection[object] - set by GUI
+$Script:LogDispatcher = $null   # WPF Window Dispatcher voor thread-safe Add - set by GUI
 $Script:WriteToHost   = $false  # In PS2EXE -NoConsole wordt Write-Host een MessageBox - standaard uit
 
 $Script:LevelOrder = @{ DEBUG = 0; INFO = 1; WARN = 2; ERROR = 3 }
@@ -73,18 +74,25 @@ function Write-Log {
             Message   = $Message
         }
         try {
-            if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -eq 'STA') {
-                $Script:LogObservable.Add($row)
+            if ($Script:LogDispatcher -and -not $Script:LogDispatcher.CheckAccess()) {
+                # Niet op UI-thread: marshal via Dispatcher
+                $local = $row
+                $Script:LogDispatcher.BeginInvoke([action]{ $Script:LogObservable.Add($local) }) | Out-Null
             } else {
-                $Script:LogObservable.Dispatcher.Invoke([action]{ $Script:LogObservable.Add($row) })
+                # Op UI-thread (of geen dispatcher beschikbaar): direct toevoegen
+                $Script:LogObservable.Add($row)
             }
         } catch { <# UI kan al gesloten zijn #> }
     }
 }
 
 function Set-LogObservable {
-    param([object]$Collection)
+    param(
+        [object]$Collection,
+        [object]$Dispatcher
+    )
     $Script:LogObservable = $Collection
+    if ($Dispatcher) { $Script:LogDispatcher = $Dispatcher }
 }
 
 function Get-LogPath { $Script:LogPath }

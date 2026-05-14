@@ -709,12 +709,13 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     </StackPanel>
 
                     <DataGrid x:Name="GridLogs" Grid.Row="1" IsReadOnly="True"
-                              CanUserSortColumns="False" FontFamily="Consolas" FontSize="12">
+                              CanUserSortColumns="False" FontFamily="Consolas" FontSize="12"
+                              AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Tijdstip"  Binding="{Binding Timestamp}" Width="180"/>
-                            <DataGridTextColumn Header="Level"     Binding="{Binding Level}"     Width="70"/>
-                            <DataGridTextColumn Header="Bron"      Binding="{Binding Source}"    Width="120"/>
-                            <DataGridTextColumn Header="Bericht"   Binding="{Binding Message}"   Width="*"/>
+                            <DataGridTextColumn Header="Tijdstip"  Binding="{Binding Timestamp, Mode=OneWay}" Width="180"/>
+                            <DataGridTextColumn Header="Level"     Binding="{Binding Level, Mode=OneWay}"     Width="70"/>
+                            <DataGridTextColumn Header="Bron"      Binding="{Binding Source, Mode=OneWay}"    Width="120"/>
+                            <DataGridTextColumn Header="Bericht"   Binding="{Binding Message, Mode=OneWay}"   Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -916,6 +917,10 @@ $xamlString = Apply-ThemeColors -xamlText $xamlString -ThemeName $ActiveTheme
 [xml]$ThemedXaml = $xamlString
 $Reader = [System.Xml.XmlNodeReader]::new($ThemedXaml)
 $Window = [System.Windows.Markup.XamlReader]::Load($Reader)
+
+# Geef het Window's Dispatcher mee aan logging zodat background-thread logs
+# thread-safe in de ObservableCollection terechtkomen
+Set-LogObservable -Collection $LogCollection -Dispatcher $Window.Dispatcher
 
 # Helpers voor control-lookup
 function Get-Control { param($name) $Window.FindName($name) }
@@ -1259,13 +1264,25 @@ foreach ($item in $CmbSettingsTheme.Items) {
     if ($item.Content -eq $themePref) { $CmbSettingsTheme.SelectedItem = $item; break }
 }
 
-# Log binding
+# Log binding + initiele startup-entries direct in collection
+# (Write-Log werkt na deze regel ook gewoon voor alle latere events)
 $GridLogs.ItemsSource = $LogCollection
 
+# Voeg startup-info direct toe aan de collection - garandeert zichtbaarheid
+foreach ($entry in @(
+    @{ Lvl='INFO'; Src='GUI';        Msg="WinGet Manager v$(Get-AppVersion) gestart" }
+    @{ Lvl='INFO'; Src='WinGetCore'; Msg="WinGet versie: $(Get-WinGetVersion)" }
+    @{ Lvl='INFO'; Src='GUI';        Msg="Theme: $ActiveTheme | Admin: $(Test-IsAdmin)" }
+)) {
+    $LogCollection.Add([PSCustomObject]@{
+        Timestamp = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')
+        Level     = $entry.Lvl
+        Source    = $entry.Src
+        Message   = $entry.Msg
+    })
+}
+
 Write-Log "GUI geladen" -Source GUI
-Write-Log "WinGet versie: $(Get-WinGetVersion)" -Source GUI
-Write-Log "App versie: $(Get-AppVersion)" -Source GUI
-Write-Log "Admin: $(Test-IsAdmin)" -Source GUI
 
 # ---------------------------------------------------------------------------
 # Zoekfunctionaliteit
@@ -1466,7 +1483,8 @@ function Refresh-Installed {
             }
         }
 
-        $Script:AllInstalled = @($merged | Where-Object { $_ })
+        # Sorteer: items met update beschikbaar bovenaan, daarna alfabetisch op naam
+        $Script:AllInstalled = @($merged | Where-Object { $_ } | Sort-Object @{ Expression = 'HasUpdate'; Descending = $true }, Name)
         Apply-InstalledFilter
         $count = $Script:AllInstalled.Count
         $upgradable = @($Script:AllInstalled | Where-Object { $_.HasUpdate }).Count
@@ -1644,9 +1662,21 @@ $BtnUpdateSelectedInstalled.Add_Click({
         return
     }
     if ($selected.Count -eq 1) {
+        if ($cfg.ConfirmUpdate) {
+            if (-not (Ask-ConfirmEx -Message "Update '$($selected[0].Name)' naar v$($selected[0].AvailableVersion)?" `
+                                    -Title "Pakket updaten" `
+                                    -ConfigKeyToDisable 'ConfirmUpdate')) { return }
+        }
         Start-SingleUpdate -PackageId $selected[0].Id -PackageName $selected[0].Name
     } else {
-        if (-not (Ask-Confirm "$($selected.Count) packages updaten?")) { return }
+        $names = ($selected | ForEach-Object { "  - $($_.Name)" }) -join "`n"
+        if ($cfg.ConfirmUpdate) {
+            if (-not (Ask-ConfirmEx -Message "$($selected.Count) packages updaten?`n`n$names" `
+                                    -Title "Bulk updaten" `
+                                    -ConfigKeyToDisable 'ConfirmUpdate')) { return }
+        } else {
+            if (-not (Ask-Confirm "$($selected.Count) packages updaten?`n`n$names")) { return }
+        }
         Start-BulkUpdate -Packages $selected
     }
 })
@@ -1733,7 +1763,13 @@ $BtnRefreshUpdates.Add_Click({ Refresh-Updates })
 $BtnUpdateAll.Add_Click({
     $count = $Script:UpdateablePackages.Count
     if ($count -eq 0) { Show-Info "Geen updates beschikbaar."; return }
-    if (-not (Ask-Confirm "Alle $count packages updaten?")) { return }
+    if ($cfg.ConfirmUpdate) {
+        if (-not (Ask-ConfirmEx -Message "Alle $count packages updaten?" `
+                                -Title "Alles updaten" `
+                                -ConfigKeyToDisable 'ConfirmUpdate')) { return }
+    } else {
+        if (-not (Ask-Confirm "Alle $count packages updaten?")) { return }
+    }
     Start-BulkUpdate -Packages $Script:UpdateablePackages
 })
 
@@ -1743,7 +1779,13 @@ $BtnUpdateSelected.Add_Click({
         Show-Info "Selecteer eerst packages via het selectievakje."
         return
     }
-    if (-not (Ask-Confirm "$($selected.Count) geselecteerde package(s) updaten?")) { return }
+    if ($cfg.ConfirmUpdate) {
+        if (-not (Ask-ConfirmEx -Message "$($selected.Count) geselecteerde package(s) updaten?" `
+                                -Title "Selectie updaten" `
+                                -ConfigKeyToDisable 'ConfirmUpdate')) { return }
+    } else {
+        if (-not (Ask-Confirm "$($selected.Count) geselecteerde package(s) updaten?")) { return }
+    }
     Start-BulkUpdate -Packages $selected
 })
 
@@ -2182,7 +2224,7 @@ $keyHandler = {
         $mods = [System.Windows.Input.Keyboard]::Modifiers
         $ctrl = ($mods -band [System.Windows.Input.ModifierKeys]::Control) -ne 0
 
-        Write-Log "Keypress: $key (ctrl=$ctrl)" -Level INFO -Source GUI
+        Write-Log "Keypress: $key (ctrl=$ctrl)" -Level DEBUG -Source GUI
 
         $tabs = $Window.FindName('MainTabs')
         if (-not $tabs) { return }

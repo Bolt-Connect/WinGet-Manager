@@ -11,6 +11,20 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ---
 
+## [0.2.4] - 2026-05-14
+
+### Opgelost
+- **Updates-tab teller klopte niet**: WinGet's footer-regel "X upgrades available." werd als pakket geparsed. Parser filtert nu ook deze footer-regels (NL + EN) plus regels zonder Id-kolom-waarde.
+- **Logs-tab bleef leeg in GUI**: `DataGridTextColumn` default binding-mode (TwoWay) werkte niet met `PSCustomObject` NoteProperty. Bindings nu expliciet `Mode=OneWay`. Plus: ObservableCollection heeft geen `Dispatcher` property — vervangen door aparte `$Script:LogDispatcher` met het Window's Dispatcher voor thread-safe Add vanuit achtergrond-runspaces.
+- **`ConfirmUpdate` setting werkte niet**: de checkbox in Settings sloeg de waarde wel op, maar geen enkele update-knop checkte hem. Nu wired bij `BtnUpdateSelectedInstalled`, `BtnUpdateAll`, en `BtnUpdateSelected` met "Niet meer vragen"-optie via `Ask-ConfirmEx`.
+
+### Gewijzigd
+- `Set-LogObservable` accepteert nu ook een `-Dispatcher` parameter (optioneel) voor thread-safe collection updates.
+- Keyboard shortcut diagnostic logs teruggezet naar `DEBUG` niveau (vervuilden de logs niet meer).
+- **Geïnstalleerd-tab sortering**: items met beschikbare update staan nu bovenaan, daarna alfabetisch. Op die manier zien gebruikers direct wat updatebaar is zonder te scrollen.
+
+---
+
 ## [0.2.3] - 2026-05-07
 
 ### Toegevoegd
@@ -110,7 +124,8 @@ Eerste publieke release.
 - Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
 - SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.4
 [0.2.3]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.3
 [0.2.2]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.2
 [0.2.1]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.1

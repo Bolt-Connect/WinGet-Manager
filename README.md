@@ -93,7 +93,7 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-### ✅ v0.2.3 (huidige stable)
+### ✅ v0.2.4 (huidige stable)
 - [x] Dark / Light / Auto theme (volgt Windows-systeemvoorkeur)
 - [x] Async UI met live progress feedback
 - [x] Auto-detectie en sluiten van apps die updates blokkeren
@@ -104,10 +104,11 @@ installer/             Inno Setup script
 - [x] GitHub Actions auto-build + release pipeline
 - [x] Portable + Inno Setup installer distributie
 - [x] Keyboard shortcuts (`Ctrl+F` zoek, `F5` ververs, `Esc` wis zoekveld, `Ctrl+R` updates, `Ctrl+L` logs, `Ctrl+W` sluit)
-- [x] "Niet meer vragen"-optie bij verwijder-confirmaties
+- [x] "Niet meer vragen"-optie bij verwijder- én update-confirmaties (apart instelbaar)
 - [x] Tab-badges met telling: `Updates (3)`, `Geïnstalleerd (147)`, `Bronnen (2)`
 - [x] Empty-state berichten in alle DataGrids ("Alle packages zijn up-to-date 🎉" etc.)
 - [x] Info-card op Bronnen-tab met uitleg over `winget` en `msstore` repositories
+- [x] Geïnstalleerd-tab gesorteerd: updatebare packages staan bovenaan
 
 ### 🚧 v0.3.0 — UX polish
 - [ ] System tray-icoon (minimaliseren naar tray, achtergrond update-check)

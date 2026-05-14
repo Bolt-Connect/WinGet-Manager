@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 
 $Script:WinGetExe = 'winget'
-$Script:AppVersion = '0.2.3'
+$Script:AppVersion = '0.2.4'
 
 # ---------------------------------------------------------------------------
 # Initialisatie
@@ -532,10 +532,22 @@ function Parse-PackageText {
     for ($i = $separatorIdx + 1; $i -lt $textLines.Count; $i++) {
         $line = $textLines[$i]
         if ([string]::IsNullOrWhiteSpace($line))    { continue }
-        if ($line -match '^\d+\s+(package|pakket)') { continue }
+        # Footer-regels van winget (zowel NL als EN):
+        #   "3 upgrades available."
+        #   "X package(s) have...", "X pakket(ten)..."
+        #   "X updates available"
+        if ($line -match '^\s*\d+\s+(package|pakket|upgrade|update)') { continue }
+        if ($line -match '\bavailable\.?\s*$')      { continue }
         if ($line -match '^(No|Geen)\b')            { continue }
         # Filter winget-progress chars (\, |, /, -)
         if ($line -match '^[\\\|\/\s-]+$')          { continue }
+        # Tekstregels zonder package-id (alleen waarschuwingen of footer-tekst)
+        # Een echte data-rij heeft minstens iets op de Id-kolom positie
+        $idCol = $columns | Where-Object { $_.Name -eq 'Id' } | Select-Object -First 1
+        if ($idCol -and $line.Length -gt $idCol.Start) {
+            $idCheck = $line.Substring($idCol.Start, [Math]::Min($idCol.End, $line.Length) - $idCol.Start).Trim()
+            if (-not $idCheck) { continue }
+        }
 
         $obj = [PSCustomObject]@{
             Id = ''; Name = ''; Version = ''
