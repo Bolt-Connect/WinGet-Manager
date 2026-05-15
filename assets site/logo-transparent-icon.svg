@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" fill="none">
-  <!-- Transparante achtergrond — geen rect -->
-  <!-- Monitor icoon -->
-  <rect x="5" y="8" width="46" height="30" rx="4" stroke="#2f81f7" stroke-width="3"/>
-  <line x1="28" y1="38" x2="28" y2="48" stroke="#2f81f7" stroke-width="3" stroke-linecap="round"/>
-  <line x1="18" y1="48" x2="38" y2="48" stroke="#2f81f7" stroke-width="3" stroke-linecap="round"/>
-</svg>
