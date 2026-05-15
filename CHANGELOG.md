@@ -6,8 +6,9 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ## [Unreleased]
 
-### Toegevoegd
-- (nog niets)
+### Gewijzigd
+- Repo hernoemd op GitHub van `WinGetManager` naar `WinGet-Manager`. Alle interne referenties bijgewerkt (README, CHANGELOG, CONTRIBUTING, CLAUDE, SECURITY, Config-defaults, Inno Setup script).
+- `SelfUpdateUrl` in nieuwe builds wijst nu naar de hernoemde repo. Bestaande v0.2.5-installs blijven werken dankzij GitHub's automatische redirect.
 
 ---
 
