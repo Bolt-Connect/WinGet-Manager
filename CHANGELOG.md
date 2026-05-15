@@ -11,6 +11,38 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
 
 ---
 
+## [0.2.5] - 2026-05-15
+
+### Toegevoegd
+- **Nieuw app-icoon** gebaseerd op het site-logo (blauw monitor met statief). Transparante achtergrond zodat het zowel op dark als light Windows-titelbalken en taakbalk past. `Generate-Icon.ps1` regenereert dit ontwerp.
+- **Monitor-logo in app header** — `⊞` tekst-symbool vervangen door native XAML rendering van het echte logo. Theme-bewuste achtergrond (donker in dark, blendt in light).
+- **`BETA` badge** naast versie-nummer in de header (amber-geel `#d29922`).
+- **Status-pill kolom** in Geïnstalleerd-tab: groene "↑ Update" pill voor updatebare packages, grijze "Up-to-date" voor de rest. Vervangt de groene rij-tekst.
+- **Tab-badges als gekleurde pills** in de tab-header (blauw bolletje voor Geïnstalleerd/Bronnen, groen voor Updates).
+- **Zoek-icoon (🔍)** in filter-balken op Zoeken- en Geïnstalleerd-tabs.
+
+### Gewijzigd
+- **Dark theme kleurpalet matcht GitHub-stijl** (zelfde palette als de website CSS):
+  - `BgPrimary` `#1A1B26` → `#0d1117`
+  - `BgSecondary` `#24283B` → `#161b22`
+  - `BgCard` `#2F3349` → `#21262d`
+  - `BorderColor` `#3B4261` → `#30363d`
+  - `TextMuted` `#7A88B0` → `#8b949e`
+  - `TextPrimary` `#E5E9F0` → `#e6edf3`
+  - `AccentBlue` `#4FA3FF` → `#2f81f7`
+  - `AccentGreen` `#4ADE80` → `#3fb950`
+  - `AccentRed` `#FF6B7A` → `#f85149`
+  - `AccentYellow` `#FFD23F` → `#d29922`
+- **Tab-styling minimal**: tabs nu zonder achtergrond/borders — alleen tekst met blauwe onderlijn bij de actieve tab. Veel cleaner.
+- **DataGrid cleaner**: geen frame-border, transparante achtergrond, alleen subtiele horizontale row-separators, kolom-headers nu UPPERCASE + muted (`NAAM`, `ID`, `VERSIE`, etc).
+- **Row spacing luchtiger**: MinHeight 38px + DataGridCell padding 10x8px voor meer ademruimte.
+- **Filter-balk groter**: padding 14×9 + MinHeight 38 voor een prominente, GitHub-stijl input.
+- **Header- en statusbar-achtergrond** matchen nu de BgPrimary kleur ipv. een aparte donkerdere card-kleur — uniformer.
+- **Window-icoon** wordt nu runtime uit de EXE geëxtraheerd (PS2EXE-embedded resource) — werkt zonder extra `assets/icon.ico` bestand naast de exe.
+- README badge "huidige stable" → **"public beta"** met oranje beta-status badge bovenaan.
+
+---
+
 ## [0.2.4] - 2026-05-14
 
 ### Opgelost
@@ -124,7 +156,8 @@ Eerste publieke release.
 - Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
 - SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGetManager/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.5
 [0.2.4]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.4
 [0.2.3]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.3
 [0.2.2]: https://github.com/Bolt-Connect/WinGetManager/releases/tag/v0.2.2

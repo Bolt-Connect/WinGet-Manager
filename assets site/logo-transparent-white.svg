@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 56" fill="none">
+  <!-- Transparante achtergrond — geen rect -->
+  <!-- Monitor icoon -->
+  <rect x="16" y="11" width="26" height="18" rx="2.5" stroke="#2f81f7" stroke-width="2"/>
+  <line x1="29" y1="29" x2="29" y2="35" stroke="#2f81f7" stroke-width="2" stroke-linecap="round"/>
+  <line x1="24" y1="35" x2="34" y2="35" stroke="#2f81f7" stroke-width="2" stroke-linecap="round"/>
+  <!-- Witte tekst -->
+  <text x="54" y="32" font-family="'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif" font-size="17.5" font-weight="700" letter-spacing="-0.3" fill="#ffffff">WinGetManager</text>
+</svg>

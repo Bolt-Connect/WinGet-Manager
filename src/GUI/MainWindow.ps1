@@ -186,8 +186,9 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             <Setter Property="CaretBrush"    Value="#89B4FA"/>
             <Setter Property="BorderBrush"   Value="#45475A"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding"       Value="10,6"/>
+            <Setter Property="Padding"       Value="14,9"/>
             <Setter Property="FontSize"      Value="13"/>
+            <Setter Property="MinHeight"     Value="38"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -202,53 +203,72 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </Setter>
         </Style>
 
-        <!-- DataGrid -->
+        <!-- DataGrid (clean, geen borders, subtiele row-separator) -->
         <Style TargetType="DataGrid">
-            <Setter Property="Background"           Value="#2A2A3E"/>
-            <Setter Property="Foreground"           Value="#CDD6F4"/>
-            <Setter Property="BorderBrush"          Value="#45475A"/>
-            <Setter Property="BorderThickness"      Value="1"/>
-            <Setter Property="RowBackground"        Value="#2A2A3E"/>
-            <Setter Property="AlternatingRowBackground" Value="#313149"/>
+            <Setter Property="Background"               Value="Transparent"/>
+            <Setter Property="Foreground"               Value="#CDD6F4"/>
+            <Setter Property="BorderThickness"          Value="0"/>
+            <Setter Property="RowBackground"            Value="Transparent"/>
+            <Setter Property="AlternatingRowBackground" Value="Transparent"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#45475A"/>
-            <Setter Property="VerticalGridLinesBrush"   Value="#45475A"/>
-            <Setter Property="SelectionMode"        Value="Extended"/>
-            <Setter Property="CanUserResizeRows"    Value="False"/>
-            <Setter Property="AutoGenerateColumns"  Value="False"/>
+            <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
+            <Setter Property="SelectionMode"            Value="Extended"/>
+            <Setter Property="CanUserResizeRows"        Value="False"/>
+            <Setter Property="AutoGenerateColumns"      Value="False"/>
+            <Setter Property="HeadersVisibility"        Value="Column"/>
         </Style>
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background"    Value="#313149"/>
-            <Setter Property="Foreground"    Value="#89B4FA"/>
-            <Setter Property="FontWeight"    Value="SemiBold"/>
-            <Setter Property="Padding"       Value="10,8"/>
-            <Setter Property="BorderBrush"   Value="#45475A"/>
+            <Setter Property="Background"     Value="Transparent"/>
+            <Setter Property="Foreground"     Value="#6C7086"/>
+            <Setter Property="FontWeight"     Value="SemiBold"/>
+            <Setter Property="FontSize"       Value="11"/>
+            <Setter Property="Padding"        Value="10,10"/>
+            <Setter Property="BorderBrush"    Value="#45475A"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
         </Style>
         <Style TargetType="DataGridRow">
             <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="MinHeight"  Value="38"/>
             <Style.Triggers>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="#45475A"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <!-- Tab -->
+        <!-- Tab (minimal, geen kaders/achtergrond — alleen onderstreping bij actief) -->
         <Style TargetType="TabControl">
-            <Setter Property="Background"   Value="#1E1E2E"/>
-            <Setter Property="BorderBrush"  Value="#45475A"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderBrush"     Value="#45475A"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding"         Value="0"/>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Background"   Value="#2A2A3E"/>
+            <Setter Property="Background"   Value="Transparent"/>
             <Setter Property="Foreground"   Value="#6C7086"/>
             <Setter Property="FontSize"     Value="13"/>
-            <Setter Property="Padding"      Value="16,8"/>
-            <Setter Property="BorderBrush"  Value="#45475A"/>
+            <Setter Property="Padding"      Value="20,12"/>
+            <Setter Property="BorderBrush"  Value="Transparent"/>
+            <Setter Property="Margin"       Value="0,0,4,-1"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="border" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
+                        <Border x:Name="border" Background="Transparent"
+                                BorderBrush="Transparent"
                                 BorderThickness="0,0,0,2" Padding="{TemplateBinding Padding}">
                             <ContentPresenter x:Name="content"
                                 ContentSource="Header"
@@ -257,12 +277,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="border"   Property="Background"    Value="#313149"/>
-                                <Setter TargetName="border"   Property="BorderBrush"   Value="#89B4FA"/>
-                                <Setter TargetName="content"  Property="TextElement.Foreground" Value="#89B4FA"/>
+                                <Setter TargetName="border"  Property="BorderBrush" Value="#89B4FA"/>
+                                <Setter TargetName="content" Property="TextElement.Foreground" Value="#CDD6F4"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border"   Property="Background"    Value="#313149"/>
+                                <Setter TargetName="content" Property="TextElement.Foreground" Value="#CDD6F4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -331,7 +350,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
         </Grid.RowDefinitions>
 
         <!-- ── Header ──────────────────────────────────────────────────── -->
-        <Border Grid.Row="0" Background="#313149" BorderBrush="#45475A" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Background="#1E1E2E" BorderBrush="#45475A" BorderThickness="0,0,0,1">
             <Grid Margin="20,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -339,7 +358,25 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="⊞" FontSize="22" Foreground="#89B4FA" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <!-- Monitor logo (XAML vorm van assets site/logo-icon.svg)
+                         Achtergrond gebruikt #313149 -> BgCard, dat is donker in dark theme
+                         en bijna onzichtbaar (lichtgrijs op witte header) in light theme. -->
+                    <Viewbox Width="28" Height="28" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Grid Width="56" Height="56">
+                            <Rectangle Fill="#313149" RadiusX="10" RadiusY="10"/>
+                            <Rectangle Stroke="#89B4FA" StrokeThickness="3"
+                                       RadiusX="4" RadiusY="4"
+                                       Width="46" Height="30"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       Margin="5,8,0,0"/>
+                            <Line Stroke="#89B4FA" StrokeThickness="3"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  X1="28" Y1="38" X2="28" Y2="48"/>
+                            <Line Stroke="#89B4FA" StrokeThickness="3"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  X1="18" Y1="48" X2="38" Y2="48"/>
+                        </Grid>
+                    </Viewbox>
                     <TextBlock Text="WinGet Manager" FontSize="18" FontWeight="Bold"
                                Foreground="#CDD6F4" VerticalAlignment="Center"/>
                     <Border Background="#89B4FA" CornerRadius="4" Margin="12,0,0,0" Padding="6,2"
@@ -347,8 +384,12 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         <TextBlock x:Name="TxtAppVersion" Text="v1.0.0" FontSize="11"
                                    Foreground="#1E1E2E" FontWeight="SemiBold"/>
                     </Border>
+                    <Border Background="#F9E2AF" CornerRadius="4" Margin="6,0,0,0" Padding="6,2"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="BETA" FontSize="11" Foreground="#1E1E2E" FontWeight="Bold"/>
+                    </Border>
                     <Border x:Name="AdminBadge" Background="#F38BA8" CornerRadius="4"
-                            Margin="8,0,0,0" Padding="6,2" VerticalAlignment="Center" Visibility="Collapsed">
+                            Margin="6,0,0,0" Padding="6,2" VerticalAlignment="Center" Visibility="Collapsed">
                         <TextBlock Text="ADMIN" FontSize="11" Foreground="#1E1E2E" FontWeight="Bold"/>
                     </Border>
                 </StackPanel>
@@ -382,8 +423,13 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="TxtSearch" Grid.Column="0" Margin="0,0,8,0"
-                                 Text="" Tag="Zoek packages..." FontSize="14"/>
+                        <Grid Grid.Column="0" Margin="0,0,8,0">
+                            <TextBox x:Name="TxtSearch" Text="" Tag="Zoek packages..." FontSize="14"
+                                     Padding="40,9,14,9"/>
+                            <TextBlock Text="🔍" FontSize="14" Foreground="#6C7086"
+                                       HorizontalAlignment="Left" VerticalAlignment="Center"
+                                       Margin="14,0,0,0" IsHitTestVisible="False"/>
+                        </Grid>
                         <ComboBox x:Name="CmbSearchSource" Grid.Column="1" Margin="0,0,8,0">
                             <ComboBoxItem Content="Alle bronnen" IsSelected="True"/>
                             <ComboBoxItem Content="winget"/>
@@ -400,10 +446,10 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         <DataGrid x:Name="GridSearch" IsReadOnly="True"
                                   SelectionMode="Single" CanUserSortColumns="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Naam"    Binding="{Binding Name}"    Width="250"/>
+                                <DataGridTextColumn Header="NAAM"    Binding="{Binding Name}"    Width="250"/>
                                 <DataGridTextColumn Header="ID"      Binding="{Binding Id}"      Width="250"/>
-                                <DataGridTextColumn Header="Versie"  Binding="{Binding Version}" Width="100"/>
-                                <DataGridTextColumn Header="Bron"    Binding="{Binding Source}"  Width="100"/>
+                                <DataGridTextColumn Header="VERSIE"  Binding="{Binding Version}" Width="100"/>
+                                <DataGridTextColumn Header="BRON"    Binding="{Binding Source}"  Width="100"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptySearch"
@@ -424,7 +470,18 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 2: Geïnstalleerd ─ -->
-            <TabItem x:Name="TabInstalled" Header="📦  Geïnstalleerd">
+            <TabItem x:Name="TabInstalled">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📦  Geïnstalleerd" VerticalAlignment="Center"/>
+                        <Border x:Name="BadgeInstalled" Background="#89B4FA" CornerRadius="10"
+                                Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="BadgeInstalledText" Text="0" FontSize="10"
+                                       FontWeight="SemiBold" Foreground="#1E1E2E"/>
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -437,7 +494,12 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="130"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="TxtFilterInstalled" Margin="0,0,8,0" Tag="Filter op naam of ID..."/>
+                        <Grid Margin="0,0,8,0">
+                            <TextBox x:Name="TxtFilterInstalled" Tag="Filter op naam of ID..." Padding="40,9,14,9"/>
+                            <TextBlock Text="🔍" FontSize="14" Foreground="#6C7086"
+                                       HorizontalAlignment="Left" VerticalAlignment="Center"
+                                       Margin="14,0,0,0" IsHitTestVisible="False"/>
+                        </Grid>
                         <Button x:Name="BtnRefreshInstalled" Grid.Column="1"
                                 Content="↺ Vernieuwen" Style="{StaticResource BtnBlue}"/>
                     </Grid>
@@ -446,21 +508,43 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         <DataGrid x:Name="GridInstalled" IsReadOnly="True" CanUserSortColumns="True"
                                   SelectionMode="Extended">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Naam"        Binding="{Binding Name}"             Width="220"/>
-                                <DataGridTextColumn Header="ID"          Binding="{Binding Id}"               Width="230"/>
-                                <DataGridTextColumn Header="Versie"      Binding="{Binding Version}"          Width="110"/>
-                                <DataGridTextColumn Header="Beschikbaar" Binding="{Binding AvailableVersion}" Width="110"/>
-                                <DataGridTextColumn Header="Bron"        Binding="{Binding Source}"           Width="100"/>
+                                <DataGridTextColumn Header="NAAM"        Binding="{Binding Name}"             Width="200"/>
+                                <DataGridTextColumn Header="ID"          Binding="{Binding Id}"               Width="220"/>
+                                <DataGridTextColumn Header="VERSIE"      Binding="{Binding Version}"          Width="100"/>
+                                <DataGridTextColumn Header="BESCHIKBAAR" Binding="{Binding AvailableVersion}" Width="100"/>
+                                <DataGridTextColumn Header="BRON"        Binding="{Binding Source}"           Width="90"/>
+                                <DataGridTemplateColumn Header="STATUS" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#313149"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                                                <Setter Property="Background" Value="#3D320A"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#6C7086"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#A6E3A1"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
-                            <DataGrid.RowStyle>
-                                <Style TargetType="DataGridRow">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasUpdate}" Value="True">
-                                            <Setter Property="Foreground" Value="#A6E3A1"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </DataGrid.RowStyle>
                         </DataGrid>
                         <TextBlock x:Name="EmptyInstalled"
                                    Text="📦  Bezig met laden..."
@@ -481,7 +565,18 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 3: Updates ─ -->
-            <TabItem x:Name="TabUpdates" Header="⬆  Updates">
+            <TabItem x:Name="TabUpdates">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⬆  Updates" VerticalAlignment="Center"/>
+                        <Border x:Name="BadgeUpdates" Background="#A6E3A1" CornerRadius="10"
+                                Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="BadgeUpdatesText" Text="0" FontSize="10"
+                                       FontWeight="SemiBold" Foreground="#1E1E2E"/>
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -512,11 +607,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <DataGrid.Columns>
                                 <DataGridCheckBoxColumn Header="" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                                         Width="36"/>
-                                <DataGridTextColumn Header="Naam"              Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="NAAM"              Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
                                 <DataGridTextColumn Header="ID"                Binding="{Binding Id}"               Width="220" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="Huidig"            Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="Beschikbaar"       Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="Bron"              Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="HUIDIG"            Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="BESCHIKBAAR"       Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="BRON"              Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptyUpdates"
@@ -600,7 +695,18 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 5: Bronnen ─ -->
-            <TabItem x:Name="TabSources" Header="🔗  Bronnen">
+            <TabItem x:Name="TabSources">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🔗  Bronnen" VerticalAlignment="Center"/>
+                        <Border x:Name="BadgeSources" Background="#89B4FA" CornerRadius="10"
+                                Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="BadgeSourcesText" Text="0" FontSize="10"
+                                       FontWeight="SemiBold" Foreground="#1E1E2E"/>
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -634,9 +740,9 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <Grid Grid.Row="1">
                         <DataGrid x:Name="GridSources" IsReadOnly="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Naam" Binding="{Binding Name}" Width="150"/>
+                                <DataGridTextColumn Header="NAAM" Binding="{Binding Name}" Width="150"/>
                                 <DataGridTextColumn Header="URL"  Binding="{Binding Url}"  Width="*"/>
-                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="180"/>
+                                <DataGridTextColumn Header="TYPE" Binding="{Binding Type}" Width="180"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptySources"
@@ -712,10 +818,10 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                               CanUserSortColumns="False" FontFamily="Consolas" FontSize="12"
                               AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Tijdstip"  Binding="{Binding Timestamp, Mode=OneWay}" Width="180"/>
-                            <DataGridTextColumn Header="Level"     Binding="{Binding Level, Mode=OneWay}"     Width="70"/>
-                            <DataGridTextColumn Header="Bron"      Binding="{Binding Source, Mode=OneWay}"    Width="120"/>
-                            <DataGridTextColumn Header="Bericht"   Binding="{Binding Message, Mode=OneWay}"   Width="*"/>
+                            <DataGridTextColumn Header="TIJDSTIP"  Binding="{Binding Timestamp, Mode=OneWay}" Width="180"/>
+                            <DataGridTextColumn Header="LEVEL"     Binding="{Binding Level, Mode=OneWay}"     Width="70"/>
+                            <DataGridTextColumn Header="BRON"      Binding="{Binding Source, Mode=OneWay}"    Width="120"/>
+                            <DataGridTextColumn Header="BERICHT"   Binding="{Binding Message, Mode=OneWay}"   Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -884,7 +990,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
         </TabControl>
 
         <!-- ── Statusbalk ────────────────────────────────────────────── -->
-        <Border Grid.Row="2" Background="#313149" BorderBrush="#45475A" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Background="#1E1E2E" BorderBrush="#45475A" BorderThickness="0,1,0,0">
             <Grid Margin="16,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -999,6 +1105,12 @@ $EmptySearch             = Get-Control 'EmptySearch'
 $EmptyInstalled          = Get-Control 'EmptyInstalled'
 $EmptyUpdates            = Get-Control 'EmptyUpdates'
 $EmptySources            = Get-Control 'EmptySources'
+$BadgeInstalled          = Get-Control 'BadgeInstalled'
+$BadgeInstalledText      = Get-Control 'BadgeInstalledText'
+$BadgeUpdates            = Get-Control 'BadgeUpdates'
+$BadgeUpdatesText        = Get-Control 'BadgeUpdatesText'
+$BadgeSources            = Get-Control 'BadgeSources'
+$BadgeSourcesText        = Get-Control 'BadgeSourcesText'
 
 # ---------------------------------------------------------------------------
 # Hulpfuncties UI-thread
@@ -1465,7 +1577,7 @@ function Refresh-Installed {
             if ($u.Id) { $updateMap[$u.Id] = $u }
         }
 
-        # Verrijk installed met AvailableVersion + HasUpdate vlag
+        # Verrijk installed met AvailableVersion + HasUpdate vlag + status-tekst
         $merged = foreach ($pkg in $installed) {
             $avail = ''
             $hasUpdate = $false
@@ -1480,6 +1592,7 @@ function Refresh-Installed {
                 AvailableVersion = $avail
                 Source           = $pkg.Source
                 HasUpdate        = $hasUpdate
+                StatusText       = if ($hasUpdate) { "↑ Update" } else { "Up-to-date" }
             }
         }
 
@@ -1489,7 +1602,12 @@ function Refresh-Installed {
         $count = $Script:AllInstalled.Count
         $upgradable = @($Script:AllInstalled | Where-Object { $_.HasUpdate }).Count
         $TxtInstalledCount.Text = "$count packages, $upgradable updatebaar"
-        $TabInstalled.Header = "📦  Geïnstalleerd ($count)"
+        if ($count -gt 0) {
+            $BadgeInstalledText.Text = "$count"
+            $BadgeInstalled.Visibility = 'Visible'
+        } else {
+            $BadgeInstalled.Visibility = 'Collapsed'
+        }
         if ($count -eq 0) {
             $EmptyInstalled.Text = "📦  Geen packages gevonden"
             $EmptyInstalled.Visibility = 'Visible'
@@ -1743,7 +1861,12 @@ function Refresh-Updates {
         $TxtUpdateCount.Text     = $count
         $TxtWinGetVersion.Text   = Get-WinGetVersion
         $BtnUpdateSelected.IsEnabled = $count -gt 0
-        $TabUpdates.Header = if ($count -gt 0) { "⬆  Updates ($count)" } else { "⬆  Updates" }
+        if ($count -gt 0) {
+            $BadgeUpdatesText.Text = "$count"
+            $BadgeUpdates.Visibility = 'Visible'
+        } else {
+            $BadgeUpdates.Visibility = 'Collapsed'
+        }
         if ($count -eq 0) {
             $EmptyUpdates.Visibility = 'Visible'
         } else {
@@ -1923,7 +2046,12 @@ function Refresh-Sources {
         $sources = @(Get-WinGetSources)
         $GridSources.ItemsSource = $sources
         $count = $sources.Count
-        $TabSources.Header = if ($count -gt 0) { "🔗  Bronnen ($count)" } else { "🔗  Bronnen" }
+        if ($count -gt 0) {
+            $BadgeSourcesText.Text = "$count"
+            $BadgeSources.Visibility = 'Visible'
+        } else {
+            $BadgeSources.Visibility = 'Collapsed'
+        }
         if ($count -eq 0) {
             $EmptySources.Visibility = 'Visible'
         } else {
@@ -2201,14 +2329,37 @@ $Window.Add_Loaded({
 # ---------------------------------------------------------------------------
 
 # Window-icoon instellen (voor titelbalk + taakbalk)
-$iconCandidate = Join-Path $ScriptRoot 'assets\icon.ico'
-if (Test-Path $iconCandidate) {
-    try {
-        $iconUri = New-Object System.Uri ((Resolve-Path $iconCandidate).Path)
-        $Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create($iconUri)
-    } catch {
-        Write-Log "Icoon laden mislukt: $_" -Level WARN -Source GUI
+# Drie strategieen, vallen terug bij falen:
+# 1. Embedded resource in lopende EXE (PS2EXE - werkt in distributie)
+# 2. assets/icon.ico naast script of EXE (PS1 dev mode)
+# 3. Stille fallback - geen icoon, app werkt nog steeds
+try {
+    $exePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+    $iconSet = $false
+
+    if ($exePath -and $exePath -match '\.exe$' -and (Test-Path $exePath)) {
+        try {
+            Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+            $extracted = [System.Drawing.Icon]::ExtractAssociatedIcon($exePath)
+            if ($extracted) {
+                $Window.Icon = [System.Windows.Interop.Imaging]::CreateBitmapSourceFromHIcon(
+                    $extracted.Handle,
+                    [System.Windows.Int32Rect]::Empty,
+                    [System.Windows.Media.Imaging.BitmapSizeOptions]::FromEmptyOptions())
+                $iconSet = $true
+            }
+        } catch { }
     }
+
+    if (-not $iconSet) {
+        $iconCandidate = Join-Path $ScriptRoot 'assets\icon.ico'
+        if (Test-Path $iconCandidate) {
+            $iconUri = New-Object System.Uri ((Resolve-Path $iconCandidate).Path)
+            $Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create($iconUri)
+        }
+    }
+} catch {
+    Write-Log "Icoon laden mislukt: $_" -Level WARN -Source GUI
 }
 
 # ---------------------------------------------------------------------------

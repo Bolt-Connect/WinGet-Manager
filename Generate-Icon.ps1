@@ -1,12 +1,13 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Genereert een placeholder app-icoon als assets/icon.ico.
+    Genereert het WinGet Manager app-icoon op basis van het site-logo
+    (monitor met statief, blauw op donkere achtergrond).
 
 .DESCRIPTION
-    Maakt een 256x256 PNG met een download-pijl op donkerblauwe achtergrond,
-    en wrapt die in een ICO-container die door Windows wordt herkend.
-    Vervang assets/icon.ico later door een eigen ontwerp.
+    Rendert het SVG-design van 'assets site/logo-icon.svg' programmatisch
+    op 256x256, wrapt in een PNG-in-ICO container.
+    Vervang assets/icon.ico door een eigen design als je een ander logo wilt.
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -21,57 +22,70 @@ if (-not (Test-Path $assetsDir)) {
 
 Add-Type -AssemblyName System.Drawing
 
-# --- 1. PNG maken (256x256) -------------------------------------------------
+# --- 1. PNG renderen (256x256) -------------------------------------------------
 Write-Host "Bitmap genereren (256x256)..." -ForegroundColor Cyan
-$size   = 256
+
+# Schaalfactor t.o.v. SVG viewBox 56x56
+$size  = 256
+$scale = $size / 56.0
+
 $bitmap = New-Object System.Drawing.Bitmap $size, $size
 $g      = [System.Drawing.Graphics]::FromImage($bitmap)
 $g.SmoothingMode    = 'AntiAlias'
 $g.InterpolationMode= 'HighQualityBicubic'
-$g.TextRenderingHint= 'AntiAliasGridFit'
 
-# Achtergrond: gradient blauw
-$bgRect = New-Object System.Drawing.Rectangle 0,0,$size,$size
-$bgBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush $bgRect,
-    ([System.Drawing.Color]::FromArgb(137, 180, 250)),
-    ([System.Drawing.Color]::FromArgb(116, 199, 236)), 45
-$g.FillRectangle($bgBrush, $bgRect)
+# Transparante achtergrond: alleen monitor-icoon, geen donker vlak.
+# Voordeel: matcht zowel dark als light Windows titelbalken en taakbalk.
+$g.Clear([System.Drawing.Color]::Transparent)
 
-# Afgeronde hoeken simuleren met een rechthoek met radius
-# (volledige rechthoek werkt ook prima voor een ico)
+# Helper: afgeronde rechthoek tekenen via GraphicsPath
+function New-RoundedRect {
+    param([float]$x, [float]$y, [float]$w, [float]$h, [float]$r)
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $d = $r * 2
+    $path.AddArc($x,        $y,        $d, $d, 180, 90)
+    $path.AddArc($x+$w-$d,  $y,        $d, $d, 270, 90)
+    $path.AddArc($x+$w-$d,  $y+$h-$d,  $d, $d,   0, 90)
+    $path.AddArc($x,        $y+$h-$d,  $d, $d,  90, 90)
+    $path.CloseFigure()
+    return $path
+}
 
-# Witte download-pijl in het midden
-$arrowBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(30, 30, 46))
+# --- Monitor-rechthoek: blauwe outline (#2f81f7) ---
+$accentColor = [System.Drawing.Color]::FromArgb(0x2f, 0x81, 0xf7)
+$strokeWidth = [int](3 * $scale)
+$pen = New-Object System.Drawing.Pen $accentColor, $strokeWidth
+$pen.LineJoin    = 'Round'
+$pen.StartCap    = 'Round'
+$pen.EndCap      = 'Round'
 
-# Pijl: schacht (rechthoek) + driehoekige punt
-$shaft = New-Object System.Drawing.Rectangle 100, 60, 56, 90
-$g.FillRectangle($arrowBrush, $shaft)
+# Monitor body: x=5 y=8 w=46 h=30 rx=4 (in SVG-coordinaten)
+$mx = [int](5  * $scale)
+$my = [int](8  * $scale)
+$mw = [int](46 * $scale)
+$mh = [int](30 * $scale)
+$mr = [int](4  * $scale)
+$monitorPath = New-RoundedRect $mx $my $mw $mh $mr
+$g.DrawPath($pen, $monitorPath)
 
-$arrowPoints = @(
-    (New-Object System.Drawing.PointF 64, 140),
-    (New-Object System.Drawing.PointF 192, 140),
-    (New-Object System.Drawing.PointF 128, 200)
-)
-$g.FillPolygon($arrowBrush, $arrowPoints)
+# --- Statief (verticale lijn) ---
+# SVG: x1=28 y1=38 x2=28 y2=48
+$g.DrawLine($pen, [int](28*$scale), [int](38*$scale), [int](28*$scale), [int](48*$scale))
 
-# Doos-streep onderaan (dock/baseline)
-$dock = New-Object System.Drawing.Rectangle 50, 215, 156, 14
-$g.FillRectangle($arrowBrush, $dock)
-
-# Kleine accentlijn boven pijl
-$accent = New-Object System.Drawing.Rectangle 100, 38, 56, 14
-$g.FillRectangle($arrowBrush, $accent)
+# --- Voet (horizontale lijn) ---
+# SVG: x1=18 y1=48 x2=38 y2=48
+$g.DrawLine($pen, [int](18*$scale), [int](48*$scale), [int](38*$scale), [int](48*$scale))
 
 # Cleanup
-$bgBrush.Dispose()
-$arrowBrush.Dispose()
+$pen.Dispose()
+$monitorPath.Dispose()
 $g.Dispose()
 
-# Sla PNG op
+# Save PNG
 $bitmap.Save($pngPath, [System.Drawing.Imaging.ImageFormat]::Png)
-Write-Host "  PNG opgeslagen: $pngPath" -ForegroundColor Green
+Write-Host "  PNG: $pngPath" -ForegroundColor Green
 
-# --- 2. ICO genereren (PNG-in-ICO formaat, Vista+) -------------------------
+# --- 2. ICO genereren (PNG-in-ICO, Vista+) ----------------------------------
 Write-Host "ICO container bouwen..." -ForegroundColor Cyan
 $pngBytes = [System.IO.File]::ReadAllBytes($pngPath)
 
@@ -103,6 +117,6 @@ $ms.Dispose()
 $bitmap.Dispose()
 
 $icoSize = (Get-Item $icoPath).Length
-Write-Host "  ICO opgeslagen: $icoPath ($icoSize bytes)" -ForegroundColor Green
+Write-Host "  ICO: $icoPath ($icoSize bytes)" -ForegroundColor Green
 Write-Host ""
-Write-Host "Klaar! Bouw nu opnieuw met Build.bat zodat de exe het icoon krijgt." -ForegroundColor Yellow
+Write-Host "Klaar! Run Build.bat zodat de exe het nieuwe icoon krijgt." -ForegroundColor Yellow

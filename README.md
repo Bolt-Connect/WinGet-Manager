@@ -3,6 +3,7 @@
 Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en silent mode voor automatisering. Geschreven in PowerShell + WPF, gecompileerd naar één enkele `.exe` van ~150 KB.
 
 [![Latest Release](https://img.shields.io/github/v/release/Bolt-Connect/WinGetManager?label=release&color=blue)](https://github.com/Bolt-Connect/WinGetManager/releases/latest)
+![Status](https://img.shields.io/badge/status-beta-d29922)
 [![Build & Release](https://github.com/Bolt-Connect/WinGetManager/actions/workflows/build.yml/badge.svg)](https://github.com/Bolt-Connect/WinGetManager/actions/workflows/build.yml)
 [![Downloads](https://img.shields.io/github/downloads/Bolt-Connect/WinGetManager/total?color=green)](https://github.com/Bolt-Connect/WinGetManager/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -17,6 +18,14 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en
 | **Portable bundle** | [WinGetManager-portable.zip](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager-portable.zip) | EXE + config + docs in één zip. Voor offline distributie. |
 
 [Alle releases →](https://github.com/Bolt-Connect/WinGetManager/releases)
+
+---
+
+## 📸 Screenshot
+
+![WinGet Manager v0.2.5 — Geïnstalleerd-tab in dark mode](assets%20site/Screenshot-v0.2.5.png)
+
+*Dark mode, Geïnstalleerd-tab — 150 packages, status-pills per pakket, tab-badges met live telling.*
 
 ---
 
@@ -93,7 +102,7 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-### ✅ v0.2.4 (huidige stable)
+### 🧪 v0.2.5 (huidige public beta)
 - [x] Dark / Light / Auto theme (volgt Windows-systeemvoorkeur)
 - [x] Async UI met live progress feedback
 - [x] Auto-detectie en sluiten van apps die updates blokkeren
@@ -105,10 +114,13 @@ installer/             Inno Setup script
 - [x] Portable + Inno Setup installer distributie
 - [x] Keyboard shortcuts (`Ctrl+F` zoek, `F5` ververs, `Esc` wis zoekveld, `Ctrl+R` updates, `Ctrl+L` logs, `Ctrl+W` sluit)
 - [x] "Niet meer vragen"-optie bij verwijder- én update-confirmaties (apart instelbaar)
-- [x] Tab-badges met telling: `Updates (3)`, `Geïnstalleerd (147)`, `Bronnen (2)`
+- [x] Tab-badges als gekleurde pills (blauw/groen) met telling per tab
+- [x] Status-pill kolom in Geïnstalleerd-tab (`↑ Update` groen / `Up-to-date` grijs)
 - [x] Empty-state berichten in alle DataGrids ("Alle packages zijn up-to-date 🎉" etc.)
 - [x] Info-card op Bronnen-tab met uitleg over `winget` en `msstore` repositories
 - [x] Geïnstalleerd-tab gesorteerd: updatebare packages staan bovenaan
+- [x] App-icoon, header-logo en kleurpalet matchen met de website (GitHub-stijl, blauw `#2f81f7` accent)
+- [x] Minimal tab-styling (transparant, alleen onderstreping bij actief) en clean DataGrid zonder borders
 
 ### 🚧 v0.3.0 — UX polish
 - [ ] System tray-icoon (minimaliseren naar tray, achtergrond update-check)
