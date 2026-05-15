@@ -358,7 +358,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Monitor logo (XAML vorm van assets site/logo-icon.svg)
+                    <!-- Monitor logo (XAML vorm van het site-logo)
                          Achtergrond gebruikt #313149 -> BgCard, dat is donker in dark theme
                          en bijna onzichtbaar (lichtgrijs op witte header) in light theme. -->
                     <Viewbox Width="28" Height="28" Margin="0,0,12,0" VerticalAlignment="Center">

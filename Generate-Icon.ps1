@@ -5,7 +5,7 @@
     (monitor met statief, blauw op donkere achtergrond).
 
 .DESCRIPTION
-    Rendert het SVG-design van 'assets site/logo-icon.svg' programmatisch
+    Rendert een blauw monitor-icoon op transparante achtergrond programmatisch
     op 256x256, wrapt in een PNG-in-ICO container.
     Vervang assets/icon.ico door een eigen design als je een ander logo wilt.
 #>

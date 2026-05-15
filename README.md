@@ -23,7 +23,7 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en
 
 ## 📸 Screenshot
 
-![WinGet Manager v0.2.5 — Geïnstalleerd-tab in dark mode](assets%20site/Screenshot-v0.2.5.png)
+![WinGet Manager v0.2.5 — Geïnstalleerd-tab in dark mode](assets/screenshots/v0.2.5-installed-dark.png)
 
 *Dark mode, Geïnstalleerd-tab — 150 packages, status-pills per pakket, tab-badges met live telling.*
 

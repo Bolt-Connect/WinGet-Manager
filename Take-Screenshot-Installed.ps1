@@ -73,7 +73,9 @@ $g   = [System.Drawing.Graphics]::FromImage($bmp)
 $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size $w, $ht))
 $g.Dispose()
 
-$out = Join-Path $PSScriptRoot 'assets site\Screenshot-v0.2.5.png'
+$outDir = Join-Path $PSScriptRoot 'assets\screenshots'
+if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+$out = Join-Path $outDir 'v0.2.5-installed-dark.png'
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
 Write-Host "Saved: $out ($([math]::Round((Get-Item $out).Length / 1KB, 1)) KB)" -ForegroundColor Green

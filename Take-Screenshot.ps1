@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 <#
-    Capture screenshot van de WinGet Manager applicatie en sla op in assets site/.
+    Capture screenshot van de WinGet Manager applicatie en sla op in assets/screenshots/.
     Veronderstelt dat de app al draait (start anders 'build\WinGetManager.exe' eerst).
 #>
 param(
@@ -49,7 +49,7 @@ $g   = [System.Drawing.Graphics]::FromImage($bmp)
 $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size $w, $ht))
 $g.Dispose()
 
-$outDir = Join-Path $PSScriptRoot 'assets site'
+$outDir = Join-Path $PSScriptRoot 'assets\screenshots'
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 $out = Join-Path $outDir $OutputName
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)

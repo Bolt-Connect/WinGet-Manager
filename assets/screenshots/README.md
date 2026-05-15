@@ -1,25 +1,37 @@
 # Screenshots
 
-Plaats hier de screenshots die in de hoofd-README worden geref.
+Screenshots van de WinGet Manager applicatie, geref. vanuit de hoofd-README en website.
 
-## Verwachte bestanden
+## Aanwezig
 
 | Bestand | Inhoud |
 |---|---|
-| `01-search.png` | Tab "Zoeken" met resultaten zichtbaar |
-| `02-installed.png` | Tab "Geïnstalleerd" met versies + groene rijen voor updatebare items |
-| `03-updates.png` | Tab "Updates" met aanvinkbare lijst |
-| `04-import-export.png` | Tab "Import/Export" met de twee panelen |
-| `05-settings.png` | Tab "Instellingen" met thema-keuze |
-| `06-light-theme.png` | App in light-modus |
+| `v0.2.5-installed-dark.png` | Geïnstalleerd-tab met 150 packages in dark mode (1200×750) |
 
-## Hoe te maken
+## Hoe nieuwe screenshots maken
+
+Automatisch via het helper-script (vereist dat de app draait):
+
+```powershell
+.\Take-Screenshot-Installed.ps1   # Start app in dark, switch naar Geïnstalleerd, capture
+.\Take-Screenshot.ps1             # Capture huidige actieve tab + theme
+```
+
+Handmatig:
 
 1. Start `build\WinGetManager.exe`
-2. Per tab: Win+Shift+S of Snipping Tool → selecteer venster
-3. Sla op als PNG met naam zoals hierboven
-4. Comprimeer eventueel via [tinypng.com](https://tinypng.com) tot ~100KB per stuk
+2. Win+Shift+S of Snipping Tool → selecteer alleen het app-venster
+3. Sla op als PNG met sprekende naam (bv. `v0.2.6-updates-dark.png`)
+4. Optioneel: comprimeer via [tinypng.com](https://tinypng.com) tot ~60-100 KB
+
+## Naming-conventie
+
+`vX.Y.Z-<tab>-<theme>.png`
+
+Voorbeelden:
+- `v0.2.5-installed-dark.png`
+- `v0.3.0-updates-light.png`
 
 ## Resolutie
 
-Bij voorkeur 1200x750 (de native venstergrootte) of een crop daarvan. PNG, geen JPG.
+Native venstergrootte is 1200×750 px. Comprimeer naar PNG (geen JPG).
