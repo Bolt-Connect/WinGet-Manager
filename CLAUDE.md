@@ -141,7 +141,7 @@ Werkt alleen in EXE-distributie. Stappen:
 
 ## Links
 
-- Repo: https://github.com/Bolt-Connect/WinGetManager
+- Repo: https://github.com/Bolt-Connect/WinGet-Manager
 - WinGet docs: https://learn.microsoft.com/en-us/windows/package-manager/winget/
 - PS2EXE: https://github.com/MScholtes/PS2EXE
 - Inno Setup: https://jrsoftware.org/isinfo.php

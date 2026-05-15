@@ -13,7 +13,7 @@ Alleen de meest recente release ontvangt actief beveiligingspatches.
 Vond je een beveiligingsprobleem? Help ons door het **niet publiek** te melden in een issue, maar privé via een van de volgende kanalen:
 
 - Open een **private security advisory** op GitHub:
-  [github.com/Bolt-Connect/WinGetManager/security/advisories/new](https://github.com/Bolt-Connect/WinGetManager/security/advisories/new)
+  [github.com/Bolt-Connect/WinGet-Manager/security/advisories/new](https://github.com/Bolt-Connect/WinGet-Manager/security/advisories/new)
 - Of stuur een mail naar de beheerder via het profiel van [@Bolt-Connect](https://github.com/Bolt-Connect)
 
 Wat te vermelden in je melding:

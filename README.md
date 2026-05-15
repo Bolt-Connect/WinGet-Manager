@@ -2,10 +2,10 @@
 
 Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en silent mode voor automatisering. Geschreven in PowerShell + WPF, gecompileerd naar één enkele `.exe` van ~150 KB.
 
-[![Latest Release](https://img.shields.io/github/v/release/Bolt-Connect/WinGetManager?label=release&color=blue)](https://github.com/Bolt-Connect/WinGetManager/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/Bolt-Connect/WinGet-Manager?label=release&color=blue)](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest)
 ![Status](https://img.shields.io/badge/status-beta-d29922)
-[![Build & Release](https://github.com/Bolt-Connect/WinGetManager/actions/workflows/build.yml/badge.svg)](https://github.com/Bolt-Connect/WinGetManager/actions/workflows/build.yml)
-[![Downloads](https://img.shields.io/github/downloads/Bolt-Connect/WinGetManager/total?color=green)](https://github.com/Bolt-Connect/WinGetManager/releases)
+[![Build & Release](https://github.com/Bolt-Connect/WinGet-Manager/actions/workflows/build.yml/badge.svg)](https://github.com/Bolt-Connect/WinGet-Manager/actions/workflows/build.yml)
+[![Downloads](https://img.shields.io/github/downloads/Bolt-Connect/WinGet-Manager/total?color=green)](https://github.com/Bolt-Connect/WinGet-Manager/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![Platform](https://img.shields.io/badge/windows-10%2B-0078D6)
 
@@ -13,11 +13,11 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en
 
 | Type | Link | Wanneer kiezen |
 |---|---|---|
-| **Portable** | [WinGetManager.exe](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager.exe) | Single-file, draaien zonder install. USB, dev-machine. |
-| **Setup installer** | [WinGetManager-Setup.exe](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager-Setup.exe) | Nette install met Start-menu, uninstaller, optionele auto-update task. |
-| **Portable bundle** | [WinGetManager-portable.zip](https://github.com/Bolt-Connect/WinGetManager/releases/latest/download/WinGetManager-portable.zip) | EXE + config + docs in één zip. Voor offline distributie. |
+| **Portable** | [WinGetManager.exe](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager.exe) | Single-file, draaien zonder install. USB, dev-machine. |
+| **Setup installer** | [WinGetManager-Setup.exe](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager-Setup.exe) | Nette install met Start-menu, uninstaller, optionele auto-update task. |
+| **Portable bundle** | [WinGetManager-portable.zip](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager-portable.zip) | EXE + config + docs in één zip. Voor offline distributie. |
 
-[Alle releases →](https://github.com/Bolt-Connect/WinGetManager/releases)
+[Alle releases →](https://github.com/Bolt-Connect/WinGet-Manager/releases)
 
 ---
 

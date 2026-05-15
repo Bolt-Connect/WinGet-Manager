@@ -9,7 +9,7 @@
 #define MyAppName        "WinGet Manager"
 #define MyAppShort       "WinGetManager"
 #define MyAppPublisher   "Bolt-Connect"
-#define MyAppURL         "https://github.com/Bolt-Connect/WinGetManager"
+#define MyAppURL         "https://github.com/Bolt-Connect/WinGet-Manager"
 #define MyAppExeName     "WinGetManager.exe"
 
 ; Versie kan extern gezet worden via /DMyAppVersion=x.y.z

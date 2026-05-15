@@ -64,7 +64,7 @@ Build-Exe.ps1          Bundelt naar single .exe via PS2EXE
 ## Lokaal bouwen
 
 ```powershell
-git clone https://github.com/Bolt-Connect/WinGetManager.git
+git clone https://github.com/Bolt-Connect/WinGet-Manager.git
 cd WinGetManager
 .\Build.bat                              # bouwt build\WinGetManager.exe
 .\build\WinGetManager.exe                # start lokaal gebouwde versie
