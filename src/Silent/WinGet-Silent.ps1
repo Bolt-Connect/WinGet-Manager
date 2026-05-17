@@ -68,13 +68,13 @@ try {
 # ---------------------------------------------------------------------------
 
 if ($Search) {
-    Write-Log "Zoeken: $Search" -Source Silent
+    Write-Log "Search: $Search" -Source Silent
     $packages = Search-WinGetPackage -Query $Search -Source $Source
     if ($packages.Count -eq 0) {
-        Write-Log "Geen resultaten gevonden voor: $Search" -Source Silent
+        Write-Log "No results found for: $Search" -Source Silent
     } else {
         $packages | Format-Table -AutoSize | Out-String | Write-Host
-        Write-Log "$($packages.Count) resultaten gevonden" -Source Silent
+        Write-Log "$($packages.Count) results found" -Source Silent
     }
     exit 0
 }
@@ -84,10 +84,10 @@ if ($Search) {
 # ---------------------------------------------------------------------------
 
 if ($ListInstalled) {
-    Write-Log "Geïnstalleerde packages ophalen" -Source Silent
+    Write-Log "Loading installed packages" -Source Silent
     $packages = Get-WinGetInstalled -Source $Source
     $packages | Format-Table -AutoSize | Out-String | Write-Host
-    Write-Log "Totaal: $($packages.Count) packages" -Source Silent
+    Write-Log "Total: $($packages.Count) packages" -Source Silent
     exit 0
 }
 
@@ -96,13 +96,13 @@ if ($ListInstalled) {
 # ---------------------------------------------------------------------------
 
 if ($ListUpdates) {
-    Write-Log "Beschikbare updates controleren" -Source Silent
+    Write-Log "Checking for available updates" -Source Silent
     $updates = Get-WinGetUpdates
     if ($updates.Count -eq 0) {
-        Write-Log "Alle packages zijn up-to-date." -Source Silent
+        Write-Log "All packages are up-to-date." -Source Silent
     } else {
         $updates | Format-Table -AutoSize | Out-String | Write-Host
-        Write-Log "$($updates.Count) update(s) beschikbaar" -Source Silent
+        Write-Log "$($updates.Count) update(s) available" -Source Silent
     }
     exit 0
 }
@@ -112,19 +112,19 @@ if ($ListUpdates) {
 # ---------------------------------------------------------------------------
 
 if ($UpdateAll) {
-    Write-Log "Alle packages updaten gestart" -Source Silent
+    Write-Log "Updating all packages" -Source Silent
 
     $onProgress = {
         param($name)
-        Write-Log "Updaten: $name" -Source Silent
+        Write-Log "Updating: $name" -Source Silent
     }
 
     $result = Update-AllWinGetPackages -Silent:$Silent -Elevated:$Elevated -OnProgress $onProgress
 
-    Write-Log "Klaar: $($result.Success) geslaagd, $($result.Failed) mislukt" -Source Silent
+    Write-Log "Done: $($result.Success) succeeded, $($result.Failed) failed" -Source Silent
 
     $result.Packages | Where-Object { -not $_.Success } | ForEach-Object {
-        Write-Log "Mislukt: $($_.Id)" -Level WARN -Source Silent
+        Write-Log "Failed: $($_.Id)" -Level WARN -Source Silent
     }
 
     exit $(if ($result.Failed -gt 0) { 1 } else { 0 })
@@ -140,24 +140,24 @@ if ($Update -and $PackageId) {
 }
 
 # ---------------------------------------------------------------------------
-# Installeren
+# Install
 # ---------------------------------------------------------------------------
 
 if ($Install) {
-    Write-Log "Installeren: $Install" -Source Silent
+    Write-Log "Installing: $Install" -Source Silent
     $ok = Install-WinGetPackage -Id $Install -Scope $Scope -Silent:$Silent -Elevated:$Elevated
     exit $(if ($ok) { 0 } else { 1 })
 }
 
 # ---------------------------------------------------------------------------
-# Verwijderen
+# Uninstall
 # ---------------------------------------------------------------------------
 
 if ($Uninstall) {
     if (-not $NoConfirm -and -not $Silent) {
-        $confirm = Read-Host "Weet u zeker dat u '$Uninstall' wilt verwijderen? (j/n)"
+        $confirm = Read-Host (Get-Text 'Dialog.SilentUninstallPrompt' -FormatArgs @($Uninstall))
         if ($confirm -notmatch '^[jJyY]') {
-            Write-Log "Verwijderen geannuleerd" -Source Silent
+            Write-Log "Uninstall cancelled" -Source Silent
             exit 0
         }
     }
@@ -170,7 +170,7 @@ if ($Uninstall) {
 # ---------------------------------------------------------------------------
 
 if ($ExportPath) {
-    Write-Log "Exporteren naar: $ExportPath" -Source Silent
+    Write-Log "Exporting to: $ExportPath" -Source Silent
     $ok = Export-WinGetPackages -OutputPath $ExportPath
     exit $(if ($ok) { 0 } else { 1 })
 }
@@ -181,10 +181,10 @@ if ($ExportPath) {
 
 if ($ImportPath) {
     if (-not (Test-Path $ImportPath)) {
-        Write-Log "Importbestand niet gevonden: $ImportPath" -Level ERROR -Source Silent
+        Write-Log "Import file not found: $ImportPath" -Level ERROR -Source Silent
         exit 1
     }
-    Write-Log "Importeren van: $ImportPath" -Source Silent
+    Write-Log "Importing from: $ImportPath" -Source Silent
     $ok = Import-WinGetPackages -InputPath $ImportPath -IgnoreUnavailable:$IgnoreUnavailable -Elevated:$Elevated
     exit $(if ($ok) { 0 } else { 1 })
 }
@@ -194,18 +194,18 @@ if ($ImportPath) {
 # ---------------------------------------------------------------------------
 
 if ($SelfUpdate) {
-    Write-Log "Zelf-update controleren" -Source Silent
+    Write-Log "Checking for self-update" -Source Silent
     $cfg2    = Get-AppConfig
     $updated = Update-App -Url $cfg2.SelfUpdateUrl
     if ($updated) {
-        Write-Log "Update toegepast, herstart de app" -Source Silent
+        Write-Log "Update applied, restart the app" -Source Silent
     } else {
-        Write-Log "Geen update beschikbaar" -Source Silent
+        Write-Log "No update available" -Source Silent
     }
     exit 0
 }
 
-Write-Host "Gebruik: .\WinGetManager.ps1 -Help voor beschikbare opties"
+Write-Host "Usage: .\WinGetManager.ps1 -Help for available options"
 exit 0
 
 # SIG # Begin signature block

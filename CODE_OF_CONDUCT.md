@@ -1,43 +1,43 @@
 # Code of Conduct
 
-## Onze belofte
+## Our pledge
 
-Wij als beheerders en bijdragers beloven dat deelname aan onze community een ervaring is die vrij is van pesterijen voor iedereen, ongeacht leeftijd, lichaamsgrootte, zichtbare of onzichtbare beperking, etniciteit, geslachtskenmerken, genderidentiteit en -expressie, ervaring, opleiding, sociaaleconomische status, nationaliteit, persoonlijke verschijning, ras, religie of seksuele identiteit en geaardheid.
+We as maintainers and contributors pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
-We beloven te handelen en te interageren op een manier die bijdraagt aan een open, gastvrije, diverse, inclusieve en gezonde community.
+We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
-## Onze standaarden
+## Our standards
 
-Voorbeelden van gedrag dat bijdraagt aan een positieve omgeving:
+Examples of behavior that contributes to a positive environment:
 
-- Empathie en vriendelijkheid tonen tegenover anderen
-- Respect hebben voor verschillende meningen, standpunten en ervaringen
-- Constructieve feedback geven en ontvangen
-- Verantwoordelijkheid nemen en excuses aanbieden bij fouten
-- Focus op wat het beste is voor de community
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by mistakes
+- Focusing on what is best for the community
 
-Voorbeelden van onaanvaardbaar gedrag:
+Examples of unacceptable behavior:
 
-- Seksueel getinte taal of beelden, ongewenste seksuele aandacht of avances
-- Trollen, beledigende of denigrerende opmerkingen, persoonlijke of politieke aanvallen
-- Publieke of privé pesterijen
-- Privégegevens van anderen publiceren zonder hun expliciete toestemming
-- Ander gedrag dat redelijkerwijs als ongepast kan worden beschouwd in een professionele setting
+- Sexualized language or imagery, and unwelcome sexual attention or advances
+- Trolling, insulting or derogatory comments, personal or political attacks
+- Public or private harassment
+- Publishing others' private information without their explicit permission
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
-## Verantwoordelijkheden
+## Responsibilities
 
-Projectbeheerders zijn verantwoordelijk voor het verduidelijken en handhaven van onze normen voor acceptabel gedrag, en zullen passende en eerlijke corrigerende maatregelen nemen als reactie op gedrag dat zij ongepast, bedreigend, beledigend of schadelijk achten.
+Project maintainers are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
 
-## Reikwijdte
+## Scope
 
-Deze Code of Conduct is van toepassing binnen alle community-ruimtes, en ook van toepassing wanneer iemand de community officieel vertegenwoordigt in publieke ruimtes.
+This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public spaces.
 
-## Handhaving
+## Enforcement
 
-Gevallen van beledigend, intimiderend of anderszins onacceptabel gedrag kunnen worden gemeld aan de projectbeheerders via een issue op GitHub of via de GitHub-functie "Report content". Alle klachten worden snel en eerlijk beoordeeld en onderzocht.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainers via a GitHub issue or via GitHub's "Report content" feature. All complaints will be reviewed and investigated promptly and fairly.
 
-Alle community-leiders zijn verplicht de privacy en veiligheid van de melder van een incident te respecteren.
+All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
-## Attributie
+## Attribution
 
-Deze Code of Conduct is aangepast op basis van de [Contributor Covenant](https://www.contributor-covenant.org/), versie 2.1, beschikbaar op https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1, available at https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.

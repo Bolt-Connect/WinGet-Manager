@@ -1,90 +1,98 @@
-# Bijdragen aan WinGet Manager
+# Contributing to WinGet Manager
 
-Bedankt dat je wilt bijdragen! Hier staat hoe je aan de slag kunt.
+Thanks for wanting to contribute! Here's how to get started.
 
-## Bug melden
+## Reporting a bug
 
-Open een issue met:
+Open an issue with:
 
-- Versie van WinGet Manager (zie titelbalk)
-- Versie van Windows (`winver`)
-- Stappen om te reproduceren
-- Verwacht vs. werkelijk gedrag
-- Logs uit de app (tab **Logs** → kopieer relevante regels)
+- Version of WinGet Manager (see title bar)
+- Version of Windows (`winver`)
+- Steps to reproduce
+- Expected vs. actual behavior
+- Logs from the app (**Logs** tab → copy relevant lines)
 
-## Feature voorstel
+## Feature proposal
 
-Open een issue met label `enhancement` waarin je beschrijft:
+Open an issue labeled `enhancement` describing:
 
-- Wat je probeert te bereiken
-- Waarom het huidige gedrag niet voldoet
-- Hoe je voorstel zou werken (UI-mock-up, voorbeeldcode mag)
+- What you are trying to achieve
+- Why current behavior is not enough
+- How your proposal would work (UI mock-up, sample code welcome)
 
 ## Pull request
 
-1. Fork de repo
-2. Maak een feature-branch: `git checkout -b feat/mijn-feature`
-3. Maak je wijzigingen in `src/`
-4. Build lokaal: `.\Build.bat` en test `build\WinGetManager.exe`
-5. Voeg een regel toe onder de juiste sectie in [CHANGELOG.md](CHANGELOG.md) → `## [Unreleased]`
-6. Commit met duidelijke berichten (`feat: ...`, `fix: ...`, `docs: ...`)
-7. Open een PR met beschrijving van wat er verandert en waarom
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Make your changes in `src/`
+4. Build locally: `.\Build.bat` and test `build\WinGetManager.exe`
+5. Add an entry under the appropriate section in [CHANGELOG.md](CHANGELOG.md) → `## [Unreleased]`
+6. Commit with clear messages (`feat: ...`, `fix: ...`, `docs: ...`)
+7. Open a PR describing what changed and why
 
-### Conventional commits (aanbevolen)
+### Conventional commits (recommended)
 
-| Prefix | Wanneer |
+| Prefix | When |
 |---|---|
-| `feat:` | Nieuwe feature voor de gebruiker |
+| `feat:` | New user-facing feature |
 | `fix:` | Bug fix |
-| `docs:` | Alleen documentatie |
-| `style:` | Formattering, geen code-wijziging |
-| `refactor:` | Code-herstructurering zonder gedragsverandering |
-| `test:` | Tests toevoegen of aanpassen |
+| `docs:` | Documentation only |
+| `style:` | Formatting, no code change |
+| `refactor:` | Code restructuring without behavior change |
+| `test:` | Add or update tests |
 | `chore:` | Build, CI, dependencies |
 
-## Codestijl
+## Code style
 
-- PowerShell 5.1 compatibel (geen `??`, `?:`, etc.)
-- Functies krijgen een verb-noun naam (`Get-X`, `Update-Y`)
-- Comments en strings in Nederlands of Engels — wees consistent binnen één bestand
-- Geen onnodig grote refactors zonder eerst issue te openen
+- PowerShell 5.1 compatible (no `??`, `?:`, etc.)
+- Functions follow verb-noun naming (`Get-X`, `Update-Y`)
+- Code, comments and log messages in **English**
+- User-facing strings (XAML, dialogs, status bar) go through `Get-Text` / `{{Key}}` and live in `src/Core/I18n.psm1`
+- No unnecessary large refactors without opening an issue first
 
-## Project structuur
+## i18n: adding a new user-facing string
+
+1. Add the key to **both** dictionaries in `src/Core/I18n.psm1` (`nl-NL` and `en-US`)
+2. In XAML, use `{{Key.Name}}` — `Apply-Translations` substitutes it during parse
+3. In code, use `Get-Text 'Key.Name'` (or `-FormatArgs @($var)` for placeholders)
+4. **Log messages stay English** — use literal strings, not `Get-Text`
+
+## Project structure
 
 ```
 src/
-├── Core/              Wrapper-modules (Logging, Config, WinGet-Core)
-├── GUI/MainWindow.ps1 WPF-interface
+├── Core/              Wrapper modules (Logging, Config, I18n, WinGet-Core)
+├── GUI/MainWindow.ps1 WPF interface
 └── Silent/            Headless CLI
 
-Build-Exe.ps1          Bundelt naar single .exe via PS2EXE
-.github/workflows/     CI/CD voor auto-build
+Build-Exe.ps1          Bundles into a single .exe via PS2EXE
+.github/workflows/     CI/CD for auto-build
 ```
 
-## Lokaal bouwen
+## Building locally
 
 ```powershell
 git clone https://github.com/Bolt-Connect/WinGet-Manager.git
-cd WinGetManager
-.\Build.bat                              # bouwt build\WinGetManager.exe
-.\build\WinGetManager.exe                # start lokaal gebouwde versie
+cd WinGet-Manager
+.\Build.bat                              # builds build\WinGetManager.exe
+.\build\WinGetManager.exe                # runs the locally built version
 ```
 
-### Setup-installer maken
+### Building the setup installer
 
-Voor de Inno Setup installer is [Inno Setup 6](https://jrsoftware.org/isdl.php) nodig:
+[Inno Setup 6](https://jrsoftware.org/isdl.php) is required:
 
 ```powershell
 winget install JRSoftware.InnoSetup
-.\Build-Installer.ps1 -Version 0.2.2     # output: release\WinGetManager-Setup-0.2.2.exe
+.\Build-Installer.ps1 -Version 0.3.0     # output: release\WinGetManager-Setup-0.3.0.exe
 ```
 
-### Icoon regenereren
+### Regenerating the icon
 
 ```powershell
 .\Generate-Icon.ps1                      # output: assets\icon.ico
 ```
 
-## Vragen?
+## Questions?
 
-Open gerust een issue met label `question` — geen bezwaar.
+Open an issue labeled `question` — happy to help.

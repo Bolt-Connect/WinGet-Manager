@@ -15,7 +15,7 @@ $Script:Defaults = [ordered]@{
     ConfirmUpdate         = $false
     SelfUpdateUrl         = 'https://api.github.com/repos/Bolt-Connect/WinGet-Manager/releases/latest'
     Theme                 = 'Auto'
-    Language              = 'nl-NL'
+    Language              = 'auto'
 }
 
 function Initialize-Config {
@@ -32,8 +32,18 @@ function Initialize-Config {
                 $merged[$key] = if ($null -ne $val) { $val } else { $Script:Defaults[$key] }
             }
             $Script:Config = $merged
+
+            # One-time migration: pre-v0.3.0 saved the SelfUpdateUrl with the old repo
+            # name `WinGetManager`. After the GitHub rename to `WinGet-Manager` the old
+            # URL still works via redirect, but we rewrite it so future calls hit the
+            # canonical URL directly.
+            $legacyUrl = 'https://api.github.com/repos/Bolt-Connect/WinGetManager/releases/latest'
+            if ($Script:Config.SelfUpdateUrl -eq $legacyUrl) {
+                $Script:Config.SelfUpdateUrl = $Script:Defaults.SelfUpdateUrl
+                Save-Config
+            }
         } catch {
-            Write-Warning "Config laden mislukt ($ConfigPath): $_  — standaardwaarden gebruikt."
+            Write-Warning (Get-Text 'Config.LoadFailed' -FormatArgs @($ConfigPath, $_))
             $Script:Config = $Script:Defaults.Clone()
         }
     } else {
@@ -67,7 +77,7 @@ function Save-Config {
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
         $Script:Config | ConvertTo-Json -Depth 5 | Set-Content $Script:ConfigPath -Encoding UTF8
     } catch {
-        Write-Warning "Config opslaan mislukt: $_"
+        Write-Warning (Get-Text 'Config.SaveFailed' -FormatArgs @("$_"))
     }
 }
 

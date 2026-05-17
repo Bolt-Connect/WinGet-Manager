@@ -75,7 +75,7 @@ $g.Dispose()
 
 $outDir = Join-Path $PSScriptRoot 'assets\screenshots'
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
-$out = Join-Path $outDir 'v0.2.5-installed-dark.png'
+$out = Join-Path $outDir 'v0.3-installed-dark.png'
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
 Write-Host "Saved: $out ($([math]::Round((Get-Item $out).Length / 1KB, 1)) KB)" -ForegroundColor Green

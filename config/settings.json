@@ -10,5 +10,5 @@
   "ConfirmUpdate": false,
   "SelfUpdateUrl": "https://api.github.com/repos/Bolt-Connect/WinGet-Manager/releases/latest",
   "Theme": "Auto",
-  "Language": "nl-NL"
+  "Language": "auto"
 }

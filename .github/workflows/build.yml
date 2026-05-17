@@ -12,39 +12,39 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write   # nodig om release te maken
+      contents: write   # required to publish a release
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: PS2EXE module installeren
+      - name: Install PS2EXE module
         shell: powershell
         run: |
           Install-Module ps2exe -Scope CurrentUser -Force -AllowClobber
 
-      - name: Icoon genereren (als die er nog niet is)
+      - name: Generate icon (if missing)
         shell: powershell
         run: |
           if (-not (Test-Path 'assets\icon.ico')) {
             .\Generate-Icon.ps1
           }
 
-      - name: EXE bouwen
+      - name: Build EXE
         shell: powershell
         run: |
           .\Build-Exe.ps1
 
-      - name: Verifieer EXE
+      - name: Verify EXE
         shell: powershell
         run: |
           if (-not (Test-Path 'build\WinGetManager.exe')) {
-            Write-Error "Build mislukt - geen exe gevonden"
+            Write-Error "Build failed - no exe found"
             exit 1
           }
           $size = (Get-Item 'build\WinGetManager.exe').Length / 1KB
           Write-Host "EXE: $size KB"
 
-      - name: Upload als artifact (elke commit)
+      - name: Upload as artifact (each commit)
         uses: actions/upload-artifact@v4
         with:
           name: WinGetManager-${{ github.sha }}
@@ -53,24 +53,24 @@ jobs:
             build/config/settings.json
           retention-days: 30
 
-      # ── Releases alleen bij git tag (vX.Y.Z) ──────────────────────────────
-      - name: Inno Setup installeren
+      # ── Releases only on git tag (vX.Y.Z) ─────────────────────────────────
+      - name: Install Inno Setup
         if: startsWith(github.ref, 'refs/tags/v')
         shell: powershell
         run: |
           choco install innosetup --no-progress -y
 
-      - name: Setup-installer bouwen
+      - name: Build setup installer
         if: startsWith(github.ref, 'refs/tags/v')
         shell: powershell
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer\WinGetManager.iss
 
-          # Maak ook stabiele filename (zonder versie) voor /releases/latest/download/ URL
+          # Also produce a stable filename (without version) for the /releases/latest/download/ URL
           Copy-Item "release\WinGetManager-Setup-$version.exe" "release\WinGetManager-Setup.exe"
 
-      - name: Portable zip maken
+      - name: Build portable zip
         if: startsWith(github.ref, 'refs/tags/v')
         shell: powershell
         run: |
@@ -82,12 +82,12 @@ jobs:
           Copy-Item 'README.md' $bundleDir
           Copy-Item 'LICENSE' $bundleDir
 
-          # Versioned naam voor archief
+          # Versioned archive name
           Compress-Archive -Path "$bundleDir\*" -DestinationPath "release\WinGetManager-$version-portable.zip" -Force
-          # Stabiele naam voor /releases/latest/download/ URL
+          # Stable name for /releases/latest/download/ URL
           Copy-Item "release\WinGetManager-$version-portable.zip" "release\WinGetManager-portable.zip"
 
-      - name: GitHub Release publiceren
+      - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:

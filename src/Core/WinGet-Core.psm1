@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 
 $Script:WinGetExe = 'winget'
-$Script:AppVersion = '0.2.5'
+$Script:AppVersion = '0.3.0'
 
 # ---------------------------------------------------------------------------
 # Initialisatie
@@ -11,7 +11,7 @@ function Initialize-WinGetCore {
     param([string]$WinGetPath = 'winget')
     $Script:WinGetExe = $WinGetPath
     if (-not (Test-WinGetInstalled)) {
-        throw "WinGet niet gevonden. Installeer App Installer via de Microsoft Store."
+        throw (Get-Text 'Throw.WinGetNotFound')
     }
 }
 
@@ -43,7 +43,7 @@ function Invoke-WinGet {
     $allArgs = $Arguments + @('--accept-source-agreements', '--disable-interactivity')
     if ($UseJson) { $allArgs += @('--output', 'json') }
 
-    Write-Log "Uitvoeren: $Script:WinGetExe $allArgs" -Level DEBUG -Source WinGetCore
+    Write-Log "Executing: $Script:WinGetExe $allArgs" -Level DEBUG -Source WinGetCore
 
     if ($Elevated -and -not (Test-IsAdmin)) {
         # Start elevated proces en wacht
@@ -57,7 +57,7 @@ function Invoke-WinGet {
     $ec     = $LASTEXITCODE
 
     if ($ec -ne 0 -and $ec -ne -1978335212) {   # -1978335212 = geen updates beschikbaar
-        Write-Log "WinGet exitcode $ec voor: $allArgs" -Level WARN -Source WinGetCore
+        Write-Log "WinGet exitcode $ec for: $allArgs" -Level WARN -Source WinGetCore
     }
 
     return [PSCustomObject]@{ ExitCode = $ec; Output = $output }
@@ -74,7 +74,7 @@ function Search-WinGetPackage {
         [int]$Count = 50
     )
 
-    Write-Log "Zoeken naar: $Query" -Source WinGetCore
+    Write-Log "Searching for: $Query" -Source WinGetCore
     $args = @('search', $Query, '--count', $Count)
     if ($Source) { $args += @('--source', $Source) }
 
@@ -89,7 +89,7 @@ function Search-WinGetPackage {
 function Get-WinGetInstalled {
     param([string]$Source)
 
-    Write-Log "Ophalen geïnstalleerde packages" -Source WinGetCore
+    Write-Log "Fetching installed packages" -Source WinGetCore
     $args = @('list')
     if ($Source) { $args += @('--source', $Source) }
 
@@ -102,13 +102,13 @@ function Get-WinGetInstalled {
 # ---------------------------------------------------------------------------
 
 function Get-WinGetUpdates {
-    Write-Log "Controleren op updates" -Source WinGetCore
+    Write-Log "Checking for updates" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('upgrade')
     return Parse-PackageText $result.Output
 }
 
 # ---------------------------------------------------------------------------
-# Installeren
+# Install
 # ---------------------------------------------------------------------------
 
 function Install-WinGetPackage {
@@ -120,7 +120,7 @@ function Install-WinGetPackage {
         [switch]$Elevated
     )
 
-    Write-Log "Installeren: $Id $(if($Version){"v$Version"})" -Source WinGetCore
+    Write-Log "Installing: $Id $(if($Version){"v$Version"})" -Source WinGetCore
     $args = @('install', '--id', $Id, '--exact', '--scope', $Scope)
     if ($Version) { $args += @('--version', $Version) }
     if ($Silent)  { $args += '--silent' }
@@ -129,13 +129,13 @@ function Install-WinGetPackage {
     $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
 
-    Write-Log "Installatie $Id $(if($ok){'geslaagd'}else{"mislukt (code $($result.ExitCode))"})" `
+    Write-Log "Installation $Id $(if($ok){'succeeded'}else{"failed (code $($result.ExitCode))"})" `
               -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
 
 # ---------------------------------------------------------------------------
-# Verwijderen
+# Uninstall
 # ---------------------------------------------------------------------------
 
 function Uninstall-WinGetPackage {
@@ -146,20 +146,20 @@ function Uninstall-WinGetPackage {
         [switch]$Elevated
     )
 
-    Write-Log "Verwijderen: $Id" -Source WinGetCore
+    Write-Log "Uninstalling: $Id" -Source WinGetCore
     $args = @('uninstall', '--id', $Id, '--exact', '--scope', $Scope)
     if ($Silent) { $args += '--silent' }
 
     $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
 
-    Write-Log "Verwijderen $Id $(if($ok){'geslaagd'}else{"mislukt (code $($result.ExitCode))"})" `
+    Write-Log "Uninstall $Id $(if($ok){'succeeded'}else{"failed (code $($result.ExitCode))"})" `
               -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
 
 # ---------------------------------------------------------------------------
-# Updaten
+# Update
 # ---------------------------------------------------------------------------
 
 function Update-WinGetPackage {
@@ -169,14 +169,14 @@ function Update-WinGetPackage {
         [switch]$Elevated
     )
 
-    Write-Log "Updaten: $Id" -Source WinGetCore
+    Write-Log "Updating: $Id" -Source WinGetCore
     $args = @('upgrade', '--id', $Id, '--exact', '--accept-package-agreements')
     if ($Silent) { $args += '--silent' }
 
     $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
 
-    Write-Log "Update $Id $(if($ok){'geslaagd'}else{"mislukt (code $($result.ExitCode))"})" `
+    Write-Log "Update $Id $(if($ok){'succeeded'}else{"failed (code $($result.ExitCode))"})" `
               -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
@@ -188,11 +188,11 @@ function Update-AllWinGetPackages {
         [scriptblock]$OnProgress
     )
 
-    Write-Log "Alle packages updaten" -Source WinGetCore
+    Write-Log "Updating all packages" -Source WinGetCore
 
     $updates = Get-WinGetUpdates
     if (-not $updates -or $updates.Count -eq 0) {
-        Write-Log "Geen updates beschikbaar" -Source WinGetCore
+        Write-Log "No updates available" -Source WinGetCore
         return @{ Success = 0; Failed = 0; Packages = @() }
     }
 
@@ -205,7 +205,7 @@ function Update-AllWinGetPackages {
         $results += [PSCustomObject]@{ Id = $pkg.Id; Name = $pkg.Name; Success = $ok }
     }
 
-    Write-Log "Update klaar: $success geslaagd, $failed mislukt" -Source WinGetCore
+    Write-Log "Update done: $success succeeded, $failed failed" -Source WinGetCore
     return @{ Success = $success; Failed = $failed; Packages = $results }
 }
 
@@ -216,7 +216,7 @@ function Update-AllWinGetPackages {
 function Get-WinGetPackageInfo {
     param([Parameter(Mandatory)][string]$Id)
 
-    Write-Log "Ophalen details: $Id" -Source WinGetCore
+    Write-Log "Fetching details: $Id" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('show', '--id', $Id, '--exact') -UseJson
     return Parse-PackageJson $result.Output | Select-Object -First 1
 }
@@ -228,10 +228,10 @@ function Get-WinGetPackageInfo {
 function Export-WinGetPackages {
     param([Parameter(Mandatory)][string]$OutputPath)
 
-    Write-Log "Exporteren naar: $OutputPath" -Source WinGetCore
+    Write-Log "Exporting to: $OutputPath" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('export', '--output', $OutputPath)
     $ok     = $result.ExitCode -eq 0
-    Write-Log "Export $(if($ok){'geslaagd'}else{'mislukt'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
+    Write-Log "Export $(if($ok){'succeeded'}else{'failed'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
 
@@ -242,13 +242,13 @@ function Import-WinGetPackages {
         [switch]$Elevated
     )
 
-    Write-Log "Importeren van: $InputPath" -Source WinGetCore
+    Write-Log "Importing from: $InputPath" -Source WinGetCore
     $args = @('import', '--import-file', $InputPath, '--accept-package-agreements')
     if ($IgnoreUnavailable) { $args += '--ignore-unavailable' }
 
     $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
-    Write-Log "Import $(if($ok){'geslaagd'}else{'mislukt'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
+    Write-Log "Import $(if($ok){'succeeded'}else{'failed'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
 
@@ -257,7 +257,7 @@ function Import-WinGetPackages {
 # ---------------------------------------------------------------------------
 
 function Get-WinGetSources {
-    Write-Log "Ophalen bronnen" -Source WinGetCore
+    Write-Log "Fetching sources" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('source', 'list') -UseJson
     return Parse-SourceJson $result.Output
 }
@@ -269,25 +269,25 @@ function Add-WinGetSource {
         [string]$Type = 'Microsoft.Rest'
     )
 
-    Write-Log "Bron toevoegen: $Name ($Url)" -Source WinGetCore
+    Write-Log "Adding source: $Name ($Url)" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('source', 'add', '--name', $Name, '--arg', $Url, '--type', $Type) -Elevated
     $ok     = $result.ExitCode -eq 0
-    Write-Log "Bron toevoegen $(if($ok){'geslaagd'}else{'mislukt'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
+    Write-Log "Add source $(if($ok){'succeeded'}else{'failed'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
 
 function Remove-WinGetSource {
     param([Parameter(Mandatory)][string]$Name)
 
-    Write-Log "Bron verwijderen: $Name" -Source WinGetCore
+    Write-Log "Removing source: $Name" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('source', 'remove', '--name', $Name) -Elevated
     $ok     = $result.ExitCode -eq 0
-    Write-Log "Bron verwijderen $(if($ok){'geslaagd'}else{'mislukt'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
+    Write-Log "Remove source $(if($ok){'succeeded'}else{'failed'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
 }
 
 function Reset-WinGetSources {
-    Write-Log "Bronnen resetten" -Source WinGetCore
+    Write-Log "Resetting sources" -Source WinGetCore
     $result = Invoke-WinGet -Arguments @('source', 'reset', '--force') -Elevated
     return $result.ExitCode -eq 0
 }
@@ -322,7 +322,7 @@ function Get-LatestAppVersion {
             })
         }
     } catch {
-        Write-Log "Versiecheck mislukt: $_" -Level WARN -Source WinGetCore
+        Write-Log "Version check failed: $_" -Level WARN -Source WinGetCore
         return $null
     }
 }
@@ -357,7 +357,7 @@ function Update-App {
 
     # Security: weiger non-HTTPS of niet-vertrouwde hosts
     if (-not (Test-TrustedUpdateUrl $Url)) {
-        Write-Log "Update geweigerd - URL niet vertrouwd: $Url" -Level WARN -Source WinGetCore
+        Write-Log "Update denied - URL not trusted: $Url" -Level WARN -Source WinGetCore
         return [PSCustomObject]@{ Updated = $false; Reason = 'untrusted_url' }
     }
 
@@ -400,22 +400,22 @@ function Update-App {
         if ($OnProgress) { & $OnProgress 'download' $info.Version }
         Invoke-WebRequest -Uri $exeAsset.Url -OutFile $tempExe -UseBasicParsing -TimeoutSec 120
     } catch {
-        Write-Log "Download mislukt: $_" -Level ERROR -Source WinGetCore
+        Write-Log "Download failed: $_" -Level ERROR -Source WinGetCore
         return [PSCustomObject]@{ Updated = $false; Reason = 'download_failed'; Latest = $info.Version }
     }
 
-    # Verifieer dat download geslaagd is en het een echte PE/EXE is
+    # Verify that the download succeeded and that it is a real PE/EXE
     if (-not (Test-Path $tempExe) -or (Get-Item $tempExe).Length -lt 50KB) {
         Remove-Item $tempExe -Force -ErrorAction SilentlyContinue
         return [PSCustomObject]@{ Updated = $false; Reason = 'corrupt_download'; Latest = $info.Version }
     }
     if (-not (Test-PEFile $tempExe)) {
         Remove-Item $tempExe -Force -ErrorAction SilentlyContinue
-        Write-Log "Download is geen geldige .exe (PE-header ontbreekt)" -Level ERROR -Source WinGetCore
+        Write-Log "Download is not a valid .exe (PE header missing)" -Level ERROR -Source WinGetCore
         return [PSCustomObject]@{ Updated = $false; Reason = 'invalid_exe'; Latest = $info.Version }
     }
 
-    Write-Log "Download geslaagd ($([math]::Round((Get-Item $tempExe).Length/1KB,1)) KB), wisselen exe..." -Source WinGetCore
+    Write-Log "Download succeeded ($([math]::Round((Get-Item $tempExe).Length/1KB,1)) KB), swapping exe..." -Source WinGetCore
 
     # Maak een replace-batch die de huidige exe vervangt zodra deze stopt
     $batPath = Join-Path $env:TEMP "WinGetManager-Update-$(Get-Date -Format 'yyyyMMddHHmmss').bat"
@@ -454,6 +454,28 @@ function Test-IsAdmin {
 # JSON parse helpers
 # ---------------------------------------------------------------------------
 
+function Resolve-PackageSource {
+    <#
+    .SYNOPSIS
+        Bepaalt de logische source van een package wanneer winget die niet meldt.
+    .DESCRIPTION
+        WinGet vult de Source-kolom niet altijd in voor `winget list` (MSIX/ARP
+        installaties). We leiden af op basis van het ID-prefix:
+          - 'MSIX\...'  -> 'msstore'   (Microsoft Store package)
+          - 'ARP\...'   -> 'lokaal'    (handmatige/installer-install, geen winget-bron)
+          - alles anders zonder source -> 'winget' (Publisher.AppName patroon)
+    #>
+    param(
+        [Parameter(Mandatory)][AllowNull()][string]$Id,
+        [AllowNull()][string]$ExistingSource
+    )
+    if ($ExistingSource -and $ExistingSource.Trim()) { return $ExistingSource }
+    if (-not $Id) { return '' }
+    if ($Id -match '^MSIX\\') { return 'msstore' }
+    if ($Id -match '^ARP\\')  { return 'local' }
+    return 'winget'
+}
+
 function Parse-PackageJson {
     param([object[]]$RawOutput)
 
@@ -472,12 +494,14 @@ function Parse-PackageJson {
 
         return $list | ForEach-Object {
             $item = $_
+            $id   = if ($item.PackageIdentifier) { $item.PackageIdentifier } elseif ($item.Id) { $item.Id } else { '' }
+            $src  = if ($item.Source)            { $item.Source }            else { '' }
             [PSCustomObject]@{
-                Id              = if ($item.PackageIdentifier) { $item.PackageIdentifier } elseif ($item.Id)          { $item.Id }      else { '' }
+                Id              = $id
                 Name            = if ($item.PackageName)       { $item.PackageName }       elseif ($item.Name)        { $item.Name }    else { '' }
                 Version         = if ($item.PackageVersion)    { $item.PackageVersion }    elseif ($item.Version)     { $item.Version } else { '' }
                 AvailableVersion= if ($item.AvailableVersion)  { $item.AvailableVersion }  else { '' }
-                Source          = if ($item.Source)            { $item.Source }            else { '' }
+                Source          = Resolve-PackageSource -Id $id -ExistingSource $src
                 Publisher       = if ($item.Publisher)         { $item.Publisher }         else { '' }
             }
         }
@@ -567,7 +591,10 @@ function Parse-PackageText {
                 'Source'    { $obj.Source           = $val }
             }
         }
-        if ($obj.Id -or $obj.Name) { $results += $obj }
+        if ($obj.Id -or $obj.Name) {
+            $obj.Source = Resolve-PackageSource -Id $obj.Id -ExistingSource $obj.Source
+            $results += $obj
+        }
     }
 
     return $results

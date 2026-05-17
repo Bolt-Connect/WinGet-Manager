@@ -10,9 +10,12 @@ logs/
 setup.log
 .setup-state.json
 
-# Sign script side-effects (handtekeningen worden bij elke build vernieuwd)
-# Niet de scripts zelf negeren, alleen de signature blocks
-# (geregeld door Build-Exe.ps1)
+# Sign script side-effects (signatures are regenerated on every build)
+# Don't ignore the scripts themselves, only the signature blocks
+# (handled by Build-Exe.ps1)
+
+# AI assistant local state (Claude Code session data, etc.)
+.claude/
 
 # OS
 Thumbs.db

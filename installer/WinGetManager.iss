@@ -1,10 +1,10 @@
 ; WinGet Manager - Inno Setup script
-; Vereist Inno Setup 6+ : https://jrsoftware.org/isdl.php
+; Requires Inno Setup 6+ : https://jrsoftware.org/isdl.php
 ;
-; Bouw lokaal:
+; Build locally:
 ;   ISCC.exe installer\WinGetManager.iss
 ;
-; In CI: GitHub Actions installeert ISCC en draait dat commando.
+; In CI: GitHub Actions installs ISCC and runs that command.
 
 #define MyAppName        "WinGet Manager"
 #define MyAppShort       "WinGetManager"
@@ -12,7 +12,7 @@
 #define MyAppURL         "https://github.com/Bolt-Connect/WinGet-Manager"
 #define MyAppExeName     "WinGetManager.exe"
 
-; Versie kan extern gezet worden via /DMyAppVersion=x.y.z
+; Version can be set externally via /DMyAppVersion=x.y.z
 #ifndef MyAppVersion
   #define MyAppVersion "0.1.0"
 #endif
@@ -49,10 +49,14 @@ DisableReadyPage=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "dutch";   MessagesFile: "compiler:Languages\Dutch.isl"
 
+[CustomMessages]
+english.ScheduledTaskDesc=Enable daily auto-update task (Task Scheduler)
+dutch.ScheduledTaskDesc=Dagelijkse auto-update taak inschakelen (Task Scheduler)
+
 [Tasks]
 Name: "desktopicon";   Description: "{cm:CreateDesktopIcon}";        GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "quicklaunch";   Description: "{cm:CreateQuickLaunchIcon}";    GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "scheduledtask"; Description: "Dagelijkse auto-update taak inschakelen (Task Scheduler)"; Flags: unchecked
+Name: "scheduledtask"; Description: "{cm:ScheduledTaskDesc}"; Flags: unchecked
 
 [Files]
 Source: "..\build\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion

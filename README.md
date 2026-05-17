@@ -1,6 +1,6 @@
 # WinGet Manager
 
-Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en silent mode voor automatisering. Geschreven in PowerShell + WPF, gecompileerd naar één enkele `.exe` van ~150 KB.
+Lightweight GUI for Windows Package Manager (`winget`) with dark/light theme and silent mode for automation. Written in PowerShell + WPF, compiled to a single `.exe` of ~225 KB.
 
 [![Latest Release](https://img.shields.io/github/v/release/Bolt-Connect/WinGet-Manager?label=release&color=blue)](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest)
 ![Status](https://img.shields.io/badge/status-beta-d29922)
@@ -11,156 +11,161 @@ Lichtgewicht GUI voor Windows Package Manager (`winget`) met dark/light theme en
 
 ## ⬇ Download
 
-| Type | Link | Wanneer kiezen |
+| Type | Link | When to choose |
 |---|---|---|
-| **Portable** | [WinGetManager.exe](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager.exe) | Single-file, draaien zonder install. USB, dev-machine. |
-| **Setup installer** | [WinGetManager-Setup.exe](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager-Setup.exe) | Nette install met Start-menu, uninstaller, optionele auto-update task. |
-| **Portable bundle** | [WinGetManager-portable.zip](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager-portable.zip) | EXE + config + docs in één zip. Voor offline distributie. |
+| **Portable** | [WinGetManager.exe](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager.exe) | Single-file, runs without install. USB, dev machine. |
+| **Setup installer** | [WinGetManager-Setup.exe](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager-Setup.exe) | Clean install with Start menu, uninstaller, optional auto-update task. |
+| **Portable bundle** | [WinGetManager-portable.zip](https://github.com/Bolt-Connect/WinGet-Manager/releases/latest/download/WinGetManager-portable.zip) | EXE + config + docs in one zip. For offline distribution. |
 
-[Alle releases →](https://github.com/Bolt-Connect/WinGet-Manager/releases)
+[All releases →](https://github.com/Bolt-Connect/WinGet-Manager/releases)
 
 ---
 
 ## 📸 Screenshot
 
-![WinGet Manager v0.2.5 — Geïnstalleerd-tab in dark mode](assets/screenshots/v0.2.5-installed-dark.png)
+![WinGet Manager v0.3.0 — Installed tab in dark mode](assets/screenshots/v0.3-installed-dark.png)
 
-*Dark mode, Geïnstalleerd-tab — 150 packages, status-pills per pakket, tab-badges met live telling.*
+*Dark mode, Installed tab — package list with status pills, source column (winget / msstore / local), and multi-select bulk actions.*
 
 ---
 
 ## Features
 
-- **🔍 Search-as-you-type** — live resultaten tijdens typen, async, geen UI freeze
-- **📦 Geïnstalleerd beheren** — versies + update-status, multi-select voor bulk-acties
-- **⬆ Updaten** — alle of geselecteerde packages met live progress (`3/12: Firefox...`)
-- **🔄 Auto-detect blokkerende apps** — sluit draaiende apps die updates verhinderen
-- **📂 Import / Export** — JSON-backup compatibel met `winget export/import`
-- **🔗 Bronnen beheren** — winget sources toevoegen, verwijderen, resetten
-- **🌗 Theme** — Dark / Light / Auto (volgt Windows-systeemvoorkeur)
-- **🤖 Silent mode** — alle functies headless via CLI voor Task Scheduler
-- **📋 Logging** — dagelijkse logs met rotatie + live panel in GUI
-- **⬆ Self-update** — controleert GitHub op nieuwe versie, downloadt + herstart
-- **🔒 Security** — alleen HTTPS naar `*.github.com`, PE-header check op downloads
+- **🔍 Search-as-you-type** — live results while typing, async, no UI freeze
+- **📦 Manage installed packages** — versions + update status, multi-select for bulk actions
+- **⬆ Update** — all or selected packages with live progress (`3/12: Firefox...`)
+- **🔄 Auto-detect blocking apps** — close running apps that prevent updates
+- **📂 Import / Export** — JSON backup compatible with `winget export/import`
+- **🔗 Manage sources** — add, remove, reset winget sources
+- **🌗 Theme** — Dark / Light / Auto (follows Windows system preference)
+- **🌍 Multi-language** — English + Dutch with automatic detection (Settings → Language)
+- **🤖 Silent mode** — all features headless via CLI for Task Scheduler
+- **📋 Logging** — daily logs with rotation + live panel in GUI (always English for shareability)
+- **⬆ Self-update** — checks GitHub for new versions, downloads + restarts
+- **🔒 Security** — HTTPS-only to `*.github.com`, PE header check on downloads
 
-## Vereisten
+## Requirements
 
-- **Windows 10** (1809+) of **Windows 11**
-- **WinGet** (App Installer) — komt standaard mee met Windows 11. Op Windows 10 [installeer via Microsoft Store](ms-windows-store://pdp/?productid=9NBLGGH4NNS1)
+- **Windows 10** (1809+) or **Windows 11**
+- **WinGet** (App Installer) — ships by default with Windows 11. On Windows 10 [install via Microsoft Store](ms-windows-store://pdp/?productid=9NBLGGH4NNS1)
 
-## Silent mode (automatisering)
+## Silent mode (automation)
 
-Alle GUI-functies zijn ook beschikbaar via command-line — geschikt voor scripts en Task Scheduler:
+All GUI features are also available via command line — suitable for scripts and Task Scheduler:
 
 ```powershell
-# Alle packages stil updaten
+# Update all packages silently
 WinGetManager.exe -UpdateAll -Silent
 
-# Specifiek pakket installeren
+# Install a specific package
 WinGetManager.exe -Install Mozilla.Firefox
 
-# Geïnstalleerde packages exporteren
+# Export installed packages
 WinGetManager.exe -ExportPath "C:\backup\packages.json"
 
-# Lijst alle beschikbare updates
+# List all available updates
 WinGetManager.exe -ListUpdates
 
-# Importeren op andere machine
+# Import on another machine
 WinGetManager.exe -ImportPath "C:\backup\packages.json"
 ```
 
-Voor een **dagelijkse auto-update** taak in Task Scheduler:
+For a **daily auto-update** task in Task Scheduler:
 
 ```powershell
 .\Install-ScheduledUpdate.ps1 -Time "03:00"
 ```
 
-## Bijdragen
+## Language
 
-Issues en pull requests zijn welkom. Zie:
+The app auto-detects your Windows UI language at startup:
+- `nl-*` → Dutch
+- `en-*` or anything else → English
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — hoe te beginnen
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community-standaarden
-- [SECURITY.md](SECURITY.md) — beveiligingsproblemen melden
-- [CHANGELOG.md](CHANGELOG.md) — wat veranderde per versie
-- [CLAUDE.md](CLAUDE.md) — context voor AI-assistenten
+To override, go to **Settings → Language** and pick `Automatic (system)` / `Nederlands` / `English`, then save and restart.
 
-## Project structuur
+Log files are always written in English regardless of UI language — this makes them easier to share in bug reports.
+
+## Contributing
+
+Issues and pull requests are welcome. See:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to get started
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards
+- [SECURITY.md](SECURITY.md) — report security issues
+- [CHANGELOG.md](CHANGELOG.md) — what changed per version
+- [CLAUDE.md](CLAUDE.md) — context for AI assistants
+
+## Project structure
 
 ```
 src/
-├── Core/              Wrapper-modules: Logging, Config, WinGet-Core
-├── GUI/MainWindow.ps1 WPF dark/light theme interface (1500+ regels)
+├── Core/              Wrapper modules: Logging, Config, I18n, WinGet-Core
+├── GUI/MainWindow.ps1 WPF dark/light theme interface (2200+ lines)
 └── Silent/            Headless CLI mode
 
-Build-Exe.ps1          Bundelt alles naar single .exe via PS2EXE
-Build-Installer.ps1    Bouwt setup-installer via Inno Setup
-Generate-Icon.ps1      Genereert assets/icon.ico
+Build-Exe.ps1          Bundles everything into a single .exe via PS2EXE
+Build-Installer.ps1    Builds the setup installer via Inno Setup
+Generate-Icon.ps1      Generates assets/icon.ico
 installer/             Inno Setup script
 .github/workflows/     GitHub Actions: auto-build + release per tag
 ```
 
 ## Roadmap
 
-### 🧪 v0.2.5 (huidige public beta)
-- [x] Dark / Light / Auto theme (volgt Windows-systeemvoorkeur)
-- [x] Async UI met live progress feedback
-- [x] Auto-detectie en sluiten van apps die updates blokkeren
-- [x] Multi-select bulk uninstall / update in Geïnstalleerd-tab
-- [x] Search-as-you-type met debouncing
+### 🧪 v0.3.0 (current public beta)
+- [x] Dark / Light / Auto theme (follows Windows system preference)
+- [x] Async UI with live progress feedback
+- [x] Auto-detect and close apps blocking updates
+- [x] Multi-select bulk uninstall / update on Installed tab
+- [x] Search-as-you-type with debouncing
 - [x] Self-update via GitHub Releases API
-- [x] Security: HTTPS-only updates, PE-header validatie
+- [x] Security: HTTPS-only updates, PE header validation
 - [x] GitHub Actions auto-build + release pipeline
-- [x] Portable + Inno Setup installer distributie
-- [x] Keyboard shortcuts (`Ctrl+F` zoek, `F5` ververs, `Esc` wis zoekveld, `Ctrl+R` updates, `Ctrl+L` logs, `Ctrl+W` sluit)
-- [x] "Niet meer vragen"-optie bij verwijder- én update-confirmaties (apart instelbaar)
-- [x] Tab-badges als gekleurde pills (blauw/groen) met telling per tab
-- [x] Status-pill kolom in Geïnstalleerd-tab (`↑ Update` groen / `Up-to-date` grijs)
-- [x] Empty-state berichten in alle DataGrids ("Alle packages zijn up-to-date 🎉" etc.)
-- [x] Info-card op Bronnen-tab met uitleg over `winget` en `msstore` repositories
-- [x] Geïnstalleerd-tab gesorteerd: updatebare packages staan bovenaan
-- [x] App-icoon, header-logo en kleurpalet matchen met de website (GitHub-stijl, blauw `#2f81f7` accent)
-- [x] Minimal tab-styling (transparant, alleen onderstreping bij actief) en clean DataGrid zonder borders
+- [x] Portable + Inno Setup installer distribution
+- [x] Keyboard shortcuts (`Ctrl+F` search, `F5` refresh, `Esc` clear search, `Ctrl+R` updates, `Ctrl+L` logs, `Ctrl+W` close)
+- [x] "Don't ask again" option for uninstall and update confirmations (separately configurable)
+- [x] Tab badges as colored pills (blue/green) with per-tab count
+- [x] Status pill column on Installed tab (`↑ Update` green / `Up-to-date` grey)
+- [x] Empty-state messages on all DataGrids ("All packages are up-to-date 🎉" etc.)
+- [x] Info card on Sources tab explaining `winget` and `msstore` repositories
+- [x] Installed tab sorted: updatable packages first
+- [x] App icon, header logo and palette match the website (GitHub style, blue `#2f81f7` accent)
+- [x] Minimal tab styling (transparent, underline only for active) and clean DataGrid without borders
+- [x] **i18n infrastructure** — English + Dutch translations (~150 keys) with auto-detect and Settings dropdown
+- [x] **Source column derivation** — fills `winget` / `msstore` / `local` based on package ID prefix
 
-### 🚧 v0.3.0 — UX polish
-- [ ] System tray-icoon (minimaliseren naar tray, achtergrond update-check)
-- [ ] Windows toast-notificaties bij voltooide updates
-- [ ] Cancel-knop voor lopende bulk-operaties
-- [ ] Package details paneel (klik op item → zijbalk met beschrijving, uitgever, links)
+### 🚧 v0.4.0 — UX polish
+- [ ] System tray icon (minimize to tray, background update check)
+- [ ] Windows toast notifications when updates complete
+- [ ] Cancel button for running bulk operations
+- [ ] Package details panel (click item → sidebar with description, publisher, links)
 
-### 🧪 v0.4.0 — Test-fase + signing
-- [ ] **SignPath aanvragen** via Open Source Program ([signpath.org/foundation](https://signpath.org/foundation))
-- [ ] CI/CD pipeline aanpassen voor signing in GitHub Actions
-- [ ] Test-builds met gesigneerde EXE → controleren dat SmartScreen geen warning meer toont
-- [ ] Volledige test-pass over alle features op verschillende Windows-versies (10 / 11)
-- [ ] Beta-testers werven (Reddit r/Windows, r/PowerShell) en feedback verzamelen
-- [ ] Bug reports verwerken tot alles stabiel werkt
+### 🧪 v0.5.0 — Test phase + signing
+- [ ] **Apply for SignPath** via Open Source Program ([signpath.org/foundation](https://signpath.org/foundation))
+- [ ] Adapt CI/CD pipeline for signing in GitHub Actions
+- [ ] Test builds with signed EXE → verify SmartScreen no longer shows a warning
+- [ ] Full test pass over all features on different Windows versions (10 / 11)
+- [ ] Recruit beta testers (Reddit r/Windows, r/PowerShell) and collect feedback
+- [ ] Process bug reports until everything is stable
 
-### 🎯 v1.0.0 — Eerste stabiele release (release candidate na geslaagde v0.4 test)
-- [ ] Alleen uitgebracht nadat v0.4.x test-fase volledig groen is
-- [ ] Documentatie completeren (screenshots, getting-started gids)
-- [ ] Polish van details die opvallen bij regulier gebruik
-- [ ] Officiele go-live aankondiging
+### 🎯 v1.0.0 — First stable release (release candidate after passing v0.5 test)
+- [ ] Only released after the v0.5.x test phase is fully green
+- [ ] Complete documentation (screenshots, getting-started guide)
+- [ ] Polish of details that surface in regular use
+- [ ] Official go-live announcement
 
-### 🌍 v1.1.0 — Multi-language
-- [ ] **Engelse vertaling** (i18n infrastructuur + EN-US locale)
-- [ ] Taal-keuze in Settings tab: **Auto / Nederlands / English**
-  - Auto = volgt Windows-systeemtaal: NL voor Nederlands, anders EN als fallback
-  - Andere systeemtalen (DE, FR, etc.) krijgen ook automatisch EN
-- [ ] Vertaal-bestanden in `i18n/<locale>.json` formaat
-- [ ] Documentatie ook in EN (README, CHANGELOG)
+### 🛠 v1.1.0 — Admin / Enterprise tools
+- [ ] Intune Win32 package generator (install.cmd, detection, uninstall)
+- [ ] *... more admin features to be defined*
 
-### 🛠 v1.2.0 — Admin / Enterprise tools
-- [ ] Intune Win32-package generator (install.cmd, detection, uninstall)
-- [ ] *... meer admin-features volgen, nog uit te denken*
+### 💡 Ideas (not scheduled yet)
+- "Recently updated" history tab
+- Custom WinGet source templates
+- Backup/restore of app data per package
+- Per-package schedule (some apps weekly instead of daily)
+- Comparison view: local machine vs. exported config from another PC
 
-### 💡 Ideeën (nog niet ingepland)
-- "Recent geüpdate" history-tab
-- Custom WinGet-bron-templates
-- Backup/restore van app-data per pakket
-- Schedule per-package (sommige apps wekelijks ipv. dagelijks updaten)
-- Comparison view: lokale machine vs. exported config van andere PC
+## License
 
-## Licentie
-
-MIT — zie [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

@@ -1,29 +1,49 @@
 # Changelog
 
-Alle noemenswaardige wijzigingen aan WinGet Manager worden in dit bestand bijgehouden.
+All notable changes to WinGet Manager are tracked in this file.
 
-Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), en dit project gebruikt [Semantic Versioning](https://semver.org/lang/nl/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Gewijzigd
-- Repo hernoemd op GitHub van `WinGetManager` naar `WinGet-Manager`. Alle interne referenties bijgewerkt (README, CHANGELOG, CONTRIBUTING, CLAUDE, SECURITY, Config-defaults, Inno Setup script).
-- `SelfUpdateUrl` in nieuwe builds wijst nu naar de hernoemde repo. Bestaande v0.2.5-installs blijven werken dankzij GitHub's automatische redirect.
+## [0.3.0] - 2026-05-17
+
+### Added
+- **i18n infrastructure** — new `src/Core/I18n.psm1` module with embedded English and Dutch dictionaries (~150 keys). Translations apply through `{{Key}}` placeholder substitution in XAML and `Get-Text` calls in code.
+- **Language picker** in Settings tab: `Automatic (system)` / `Nederlands` / `English`. Save prompts for restart to apply.
+- **Auto-detect language** via `CurrentUICulture` at startup: `nl-*` → Dutch, anything else → English (fallback). Default `Language` setting changed from `nl-NL` to `auto`.
+- **All documentation translated to English** (README, CHANGELOG, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, CLAUDE).
+
+### Changed
+- **Source column derivation** — `Parse-PackageJson` and `Parse-PackageText` now derive a logical source when winget leaves the column empty: `MSIX\…` → `msstore`, `ARP\…` → `local`, anything else → `winget`. Previously most installed packages showed an empty BRON column. New helper `Resolve-PackageSource` in `WinGet-Core.psm1`.
+- **All log messages translated to English** (~60 strings across `WinGet-Silent.ps1`, `MainWindow.ps1`, `WinGet-Core.psm1`). Logs are now language-neutral regardless of UI language, making them easier to share in bug reports.
+- **Status bar and runtime status messages** now i18n-aware (`Set-Status` calls go through `Get-Text`).
+- **Dialog texts** for Show-Info / Show-Error / Ask-Confirm fully translated (~45 dialogs across install, uninstall, update, import/export, sources, settings, self-update flows).
+- **Self-update reason strings** translated (up-to-date / no asset / download failed / corrupt / invalid exe / untrusted URL / not-exe runtime).
+- **Sources tab description paragraph** fully translated, including the Run blocks explaining `winget` / `msstore` defaults.
+- **Repo renamed** on GitHub from `WinGetManager` to `WinGet-Manager`. All internal references updated (README, CHANGELOG, CONTRIBUTING, CLAUDE, SECURITY, Config defaults, Inno Setup script).
+- `SelfUpdateUrl` in new builds now points to the renamed repo. **One-time automatic migration**: when v0.2.5 users upgrade to v0.3.0, the legacy URL in their saved `settings.json` is rewritten to the new repo URL on first start.
+- **Inno Setup installer** now uses `[CustomMessages]` with English + Dutch task descriptions instead of a hardcoded Dutch string.
+- **Build pipeline and CI workflow** step names and console output translated to English.
+
+### Fixed
+- **Search returned 0 results in English mode** — `CmbSearchSource` filter compared the translated `Content` string ("Alle bronnen") which broke in EN. ComboBox items now use a language-neutral `Tag` attribute (`""` / `"winget"` / `"msstore"`) for the filter check. Same pattern applied to the Logs level filter (`CmbLogFilter`).
+- **`EmptySearch.Text` reset still showed Dutch placeholder** when typing fewer than 2 characters, regardless of UI language. Now reads from `Get-Text 'Search.Empty'`.
 
 ---
 
 ## [0.2.5] - 2026-05-15
 
-### Toegevoegd
-- **Nieuw app-icoon** gebaseerd op het site-logo (blauw monitor met statief). Transparante achtergrond zodat het zowel op dark als light Windows-titelbalken en taakbalk past. `Generate-Icon.ps1` regenereert dit ontwerp.
-- **Monitor-logo in app header** — `⊞` tekst-symbool vervangen door native XAML rendering van het echte logo. Theme-bewuste achtergrond (donker in dark, blendt in light).
-- **`BETA` badge** naast versie-nummer in de header (amber-geel `#d29922`).
-- **Status-pill kolom** in Geïnstalleerd-tab: groene "↑ Update" pill voor updatebare packages, grijze "Up-to-date" voor de rest. Vervangt de groene rij-tekst.
-- **Tab-badges als gekleurde pills** in de tab-header (blauw bolletje voor Geïnstalleerd/Bronnen, groen voor Updates).
-- **Zoek-icoon (🔍)** in filter-balken op Zoeken- en Geïnstalleerd-tabs.
+### Added
+- **New app icon** based on the site logo (blue monitor with stand). Transparent background so it fits both dark and light Windows title bars and taskbar. `Generate-Icon.ps1` regenerates this design.
+- **Monitor logo in app header** — replaced the `⊞` text symbol with a native XAML rendering of the actual logo. Theme-aware background (dark in dark, blends in light).
+- **`BETA` badge** next to the version number in the header (amber yellow `#d29922`).
+- **Status pill column** on the Installed tab: green "↑ Update" pill for updatable packages, grey "Up-to-date" for the rest. Replaces the green row text.
+- **Tab badges as colored pills** in the tab header (blue for Installed/Sources, green for Updates).
+- **Search icon (🔍)** in filter bars on Search and Installed tabs.
 
-### Gewijzigd
-- **Dark theme kleurpalet matcht GitHub-stijl** (zelfde palette als de website CSS):
+### Changed
+- **Dark theme palette matches GitHub style** (same palette as the website CSS):
   - `BgPrimary` `#1A1B26` → `#0d1117`
   - `BgSecondary` `#24283B` → `#161b22`
   - `BgCard` `#2F3349` → `#21262d`
@@ -34,130 +54,131 @@ Het formaat is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1
   - `AccentGreen` `#4ADE80` → `#3fb950`
   - `AccentRed` `#FF6B7A` → `#f85149`
   - `AccentYellow` `#FFD23F` → `#d29922`
-- **Tab-styling minimal**: tabs nu zonder achtergrond/borders — alleen tekst met blauwe onderlijn bij de actieve tab. Veel cleaner.
-- **DataGrid cleaner**: geen frame-border, transparante achtergrond, alleen subtiele horizontale row-separators, kolom-headers nu UPPERCASE + muted (`NAAM`, `ID`, `VERSIE`, etc).
-- **Row spacing luchtiger**: MinHeight 38px + DataGridCell padding 10x8px voor meer ademruimte.
-- **Filter-balk groter**: padding 14×9 + MinHeight 38 voor een prominente, GitHub-stijl input.
-- **Header- en statusbar-achtergrond** matchen nu de BgPrimary kleur ipv. een aparte donkerdere card-kleur — uniformer.
-- **Window-icoon** wordt nu runtime uit de EXE geëxtraheerd (PS2EXE-embedded resource) — werkt zonder extra `assets/icon.ico` bestand naast de exe.
-- README badge "huidige stable" → **"public beta"** met oranje beta-status badge bovenaan.
+- **Minimal tab styling**: tabs now without background/borders — only text with a blue underline for the active tab. Much cleaner.
+- **Cleaner DataGrid**: no frame border, transparent background, only subtle horizontal row separators, column headers now UPPERCASE + muted (`NAME`, `ID`, `VERSION`, etc).
+- **Airier row spacing**: MinHeight 38px + DataGridCell padding 10x8px for more breathing room.
+- **Bigger filter bar**: padding 14×9 + MinHeight 38 for a prominent, GitHub-style input.
+- **Header and status bar background** now match `BgPrimary` instead of a separate darker card color — more uniform.
+- **Window icon** is now extracted at runtime from the EXE (PS2EXE-embedded resource) — works without an extra `assets/icon.ico` file next to the exe.
+- README badge "current stable" → **"public beta"** with an orange beta status badge at the top.
 
 ---
 
 ## [0.2.4] - 2026-05-14
 
-### Opgelost
-- **Updates-tab teller klopte niet**: WinGet's footer-regel "X upgrades available." werd als pakket geparsed. Parser filtert nu ook deze footer-regels (NL + EN) plus regels zonder Id-kolom-waarde.
-- **Logs-tab bleef leeg in GUI**: `DataGridTextColumn` default binding-mode (TwoWay) werkte niet met `PSCustomObject` NoteProperty. Bindings nu expliciet `Mode=OneWay`. Plus: ObservableCollection heeft geen `Dispatcher` property — vervangen door aparte `$Script:LogDispatcher` met het Window's Dispatcher voor thread-safe Add vanuit achtergrond-runspaces.
-- **`ConfirmUpdate` setting werkte niet**: de checkbox in Settings sloeg de waarde wel op, maar geen enkele update-knop checkte hem. Nu wired bij `BtnUpdateSelectedInstalled`, `BtnUpdateAll`, en `BtnUpdateSelected` met "Niet meer vragen"-optie via `Ask-ConfirmEx`.
+### Fixed
+- **Updates tab counter was wrong**: WinGet's footer line "X upgrades available." was being parsed as a package. Parser now also filters these footer lines (NL + EN) plus rows without an Id-column value.
+- **Logs tab stayed empty in GUI**: `DataGridTextColumn` default binding mode (TwoWay) did not work with `PSCustomObject` NoteProperty. Bindings are now explicit `Mode=OneWay`. Also: ObservableCollection has no `Dispatcher` property — replaced by a separate `$Script:LogDispatcher` with the Window's Dispatcher for thread-safe Add from background runspaces.
+- **`ConfirmUpdate` setting didn't work**: the checkbox in Settings saved the value but no update button checked it. Now wired in `BtnUpdateSelectedInstalled`, `BtnUpdateAll`, and `BtnUpdateSelected` with "Don't ask again" option via `Ask-ConfirmEx`.
 
-### Gewijzigd
-- `Set-LogObservable` accepteert nu ook een `-Dispatcher` parameter (optioneel) voor thread-safe collection updates.
-- Keyboard shortcut diagnostic logs teruggezet naar `DEBUG` niveau (vervuilden de logs niet meer).
-- **Geïnstalleerd-tab sortering**: items met beschikbare update staan nu bovenaan, daarna alfabetisch. Op die manier zien gebruikers direct wat updatebaar is zonder te scrollen.
+### Changed
+- `Set-LogObservable` now also accepts a `-Dispatcher` parameter (optional) for thread-safe collection updates.
+- Keyboard shortcut diagnostic logs lowered back to `DEBUG` level (no longer polluting the logs).
+- **Installed tab sorting**: items with an available update now appear at the top, then alphabetical. This way users immediately see what's updatable without scrolling.
 
 ---
 
 ## [0.2.3] - 2026-05-07
 
-### Toegevoegd
-- **Tab-badges met telling**: tabs tonen nu het aantal items per categorie, bijv. `📦 Geïnstalleerd (147)`, `⬆ Updates (3)`, `🔗 Bronnen (2)`. Updates en Bronnen tonen alleen een teller bij ≥1 item.
-- **Empty-state berichten** in alle DataGrids:
-  - Zoeken (geen tekst): "🔍 Typ minimaal 2 tekens om te zoeken"
-  - Zoeken (geen match): "🔍 Geen resultaten voor 'xyz'"
-  - Geïnstalleerd (leeg): "📦 Geen packages gevonden"
-  - Updates (leeg): "✓ Alle packages zijn up-to-date 🎉" (groen)
-  - Bronnen (leeg): "🔗 Geen bronnen geconfigureerd"
-- **Info-card op Bronnen-tab** met uitleg wat `winget` en `msstore` zijn en wat je hier kunt doen.
+### Added
+- **Tab badges with count**: tabs now show the number of items per category, e.g. `📦 Installed (147)`, `⬆ Updates (3)`, `🔗 Sources (2)`. Updates and Sources only show a counter at ≥1 item.
+- **Empty-state messages** in all DataGrids:
+  - Search (no text): "🔍 Type at least 2 characters to search"
+  - Search (no match): "🔍 No results for 'xyz'"
+  - Installed (empty): "📦 No packages found"
+  - Updates (empty): "✓ All packages are up-to-date 🎉" (green)
+  - Sources (empty): "🔗 No sources configured"
+- **Info card on Sources tab** explaining what `winget` and `msstore` are and what you can do here.
 
 ---
 
 ## [0.2.2] - 2026-05-06
 
-### Toegevoegd
-- Globale keyboard shortcuts:
-  - `F5` ververst de huidige tab (Geïnstalleerd / Updates / Bronnen / Zoeken)
-  - `Ctrl+F` springt naar Zoeken-tab en focust de zoekbalk
-  - `Ctrl+R` opent Updates-tab en ververst meteen
-  - `Ctrl+L` opent Logs-tab
-  - `Ctrl+W` sluit de app
-  - `Esc` wist het zoekveld op de Zoeken-tab
-- F5 simuleert een klik op de bijbehorende Vernieuwen-knop met **goud-flash animatie** (250ms) voor zichtbare feedback.
-- "Sneltoetsen" sectie in Instellingen-tab met overzicht van alle keyboard shortcuts.
-- "Niet meer vragen"-checkbox bij verwijder-confirmaties; aanvinken slaat ConfirmUninstall=false op in config.
-- `Ask-ConfirmEx` helper: themed custom dialog met optionele opt-out checkbox per actie.
+### Added
+- Global keyboard shortcuts:
+  - `F5` refreshes the current tab (Installed / Updates / Sources / Search)
+  - `Ctrl+F` jumps to the Search tab and focuses the search bar
+  - `Ctrl+R` opens the Updates tab and refreshes immediately
+  - `Ctrl+L` opens the Logs tab
+  - `Ctrl+W` closes the app
+  - `Esc` clears the search field on the Search tab
+- F5 simulates a click on the corresponding Refresh button with a **gold flash animation** (250ms) for visible feedback.
+- "Keyboard shortcuts" section in the Settings tab with an overview of all shortcuts.
+- "Don't ask again" checkbox on uninstall confirmations; ticking it saves `ConfirmUninstall=false` in the config.
+- `Ask-ConfirmEx` helper: themed custom dialog with optional opt-out checkbox per action.
 
-### Opgelost
-- ComboBoxItems waren onleesbaar in dark mode (donkere systeem-tekst op donkere achtergrond). Toegevoegd: expliciete ComboBoxItem-style met theme-bewuste Foreground.
-- DataGrid.ItemsSource crashte bij pipelines met 1 resultaat (PowerShell unwrapt single-item arrays naar scalar). Alle assignments nu gewrapped met `@(...)`.
-- Keyboard shortcut handler werd niet altijd gevuurd als TextBox/DataGrid focus had. Vervangen door `AddHandler` met `handledEventsToo=$true`.
+### Fixed
+- ComboBoxItems were unreadable in dark mode (dark system text on dark background). Added: explicit ComboBoxItem style with theme-aware Foreground.
+- DataGrid.ItemsSource crashed on pipelines with 1 result (PowerShell unwraps single-item arrays to scalar). All assignments now wrapped with `@(...)`.
+- Keyboard shortcut handler did not always fire if a TextBox/DataGrid had focus. Replaced with `AddHandler` and `handledEventsToo=$true`.
 
 ---
 
 ## [0.2.1] - 2026-05-06
 
-### Toegevoegd
-- README-badges: build status, latest release, downloads count, license.
-- Directe download-links in README via stabiele `/releases/latest/download/` URL-patroon — werkt automatisch voor elke nieuwe release zonder de README te updaten.
-- `CLAUDE.md` met project-context voor AI-assistenten (Claude Code, Cursor, Copilot).
+### Added
+- README badges: build status, latest release, downloads count, license.
+- Direct download links in README via stable `/releases/latest/download/` URL pattern — works automatically for every new release without updating the README.
+- `CLAUDE.md` with project context for AI assistants (Claude Code, Cursor, Copilot).
 
-### Gewijzigd
-- GitHub Actions uploadt nu zowel versioned (`WinGetManager-Setup-0.2.1.exe`) als stabiele (`WinGetManager-Setup.exe`) filenames per release.
-- Hetzelfde voor portable zip: `WinGetManager-v0.2.1-portable.zip` + `WinGetManager-portable.zip`.
-- README-installatie-sectie vereenvoudigd: nu duidelijke vergelijking van Setup vs Portable vs Bundle.
+### Changed
+- GitHub Actions now uploads both versioned (`WinGetManager-Setup-0.2.1.exe`) and stable (`WinGetManager-Setup.exe`) filenames per release.
+- Same for portable zip: `WinGetManager-v0.2.1-portable.zip` + `WinGetManager-portable.zip`.
+- README install section simplified: now a clear comparison of Setup vs Portable vs Bundle.
 
-### Opgelost
-- v0.2.0 release miste de stabiele `WinGetManager-Setup.exe` filename — direct-download links in README pointten naar 404 voor de installer. Vanaf 0.2.1 werken alle `/releases/latest/download/...` URLs.
+### Fixed
+- v0.2.0 release was missing the stable `WinGetManager-Setup.exe` filename — direct download links in README pointed to 404 for the installer. From 0.2.1 onward all `/releases/latest/download/...` URLs work.
 
 ---
 
 ## [0.2.0] - 2026-05-06
 
-### Toegevoegd
-- Werkende self-update via GitHub Releases API: detecteert nieuwere versie, downloadt de nieuwe `.exe`, vervangt zichzelf en herstart automatisch.
-- Achtergrond update-check bij opstarten — knop "App updaten" wordt oranje wanneer er een nieuwere versie beschikbaar is.
-- Search-as-you-type op de Zoeken-tab met 400ms debouncing en async runspaces (UI freeze-free).
-- Live progress-tekst bij Update Alles / Selectie updaten: "Updaten (3/12): Firefox..."
-- Mislukt-overzicht na bulk update toont welke packages niet konden worden bijgewerkt.
-- Screenshots-mappen-structuur en README-sectie voor visuele documentatie.
+### Added
+- Working self-update via GitHub Releases API: detects newer version, downloads the new `.exe`, replaces itself and restarts automatically.
+- Background update check at startup — "Update app" button turns orange when a newer version is available.
+- Search-as-you-type on the Search tab with 400ms debouncing and async runspaces (UI freeze-free).
+- Live progress text during Update All / Update selection: "Updating (3/12): Firefox..."
+- Failure overview after bulk update shows which packages could not be updated.
+- Screenshots folder structure and README section for visual documentation.
 
-### Gewijzigd
-- Versie verhoogd van `1.0.0` (intern) naar `0.2.0` om aan te sluiten bij de release-tag.
-- Update-knop verwijst nu naar GitHub Releases API ipv. een placeholder-URL.
+### Changed
+- Version bumped from `1.0.0` (internal) to `0.2.0` to align with the release tag.
+- Update button now points to the GitHub Releases API instead of a placeholder URL.
 
-### Opgelost
-- Race condition in de search-debouncing waarbij oude timers null-reference fouten veroorzaakten.
-- "Cannot bind argument" fout bij update door collision met PowerShell `$args` automatic variable.
+### Fixed
+- Race condition in search debouncing where old timers caused null-reference errors.
+- "Cannot bind argument" error during update due to collision with PowerShell's `$args` automatic variable.
 
 ---
 
 ## [0.1.0] - 2026-05-06
 
-Eerste publieke release.
+First public release.
 
-### Toegevoegd
-- WPF GUI met 7 tabbladen: Zoeken, Geïnstalleerd, Updates, Import/Export, Bronnen, Logs, Instellingen.
-- Dark / Light / Auto thema (Auto volgt Windows-systeemvoorkeur).
-- Async background runspace zodat de UI niet bevriest tijdens lange winget-operaties.
-- Auto-detectie van draaiende apps die een update blokkeren, met confirmatie-dialoog om ze te sluiten en de update te hervatten.
-- Mapping van WinGet exit codes naar leesbare meldingen (in plaats van rauwe codes).
-- Updates-tab: aanvinkbare checkbox-kolom om selectief packages te updaten.
-- Geïnstalleerd-tab: toont actuele versie + beschikbare versie, kleurt rijen groen wanneer er een update beschikbaar is.
-- Silent CLI-modus voor automatisering (Task Scheduler, scripts):
+### Added
+- WPF GUI with 7 tabs: Search, Installed, Updates, Import/Export, Sources, Logs, Settings.
+- Dark / Light / Auto theme (Auto follows Windows system preference).
+- Async background runspace so the UI doesn't freeze during long winget operations.
+- Auto-detect running apps that block an update, with a confirmation dialog to close them and resume the update.
+- Mapping of WinGet exit codes to readable messages (instead of raw codes).
+- Updates tab: checkable checkbox column to selectively update packages.
+- Installed tab: shows current version + available version, colors rows green when an update is available.
+- Silent CLI mode for automation (Task Scheduler, scripts):
   - `-UpdateAll`, `-Install`, `-Uninstall`, `-Search`, `-ExportPath`, `-ImportPath`, `-ListInstalled`, `-ListUpdates`.
-- Slimme config-locatie: portable (naast de exe) of `%APPDATA%\WinGetManager\` als app-map niet schrijfbaar is.
-- Logging met dagelijkse rotatie, retentie-instelling en live log-paneel in de GUI.
-- Single-file `.exe` distributie (146 KB) via PS2EXE bundling.
-- Inno Setup installer met optionele bureaublad-snelkoppeling en Task Scheduler taak.
-- GitHub Actions workflow die bij elke tag automatisch portable + installer + zip publiceert als release.
-- Documentatie: README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, LICENSE (MIT).
+- Smart config location: portable (next to the exe) or `%APPDATA%\WinGetManager\` if the app folder isn't writable.
+- Logging with daily rotation, retention setting and a live log panel in the GUI.
+- Single-file `.exe` distribution (146 KB) via PS2EXE bundling.
+- Inno Setup installer with optional desktop shortcut and Task Scheduler task.
+- GitHub Actions workflow that automatically publishes portable + installer + zip as a release on every tag.
+- Documentation: README, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, LICENSE (MIT).
 
-### Bekend
-- Self-update functionaliteit is voorzien in de architectuur maar nog niet geïmplementeerd; updates moeten handmatig via een nieuwe download.
-- Smart App Control (Windows 11) blokkeert het uitvoeren van de exe — uitschakelen is een one-way actie. Wordt opgelost zodra app via Microsoft Store gedistribueerd wordt.
-- SmartScreen toont een "Unknown publisher" waarschuwing bij eerste start (klik *Meer info* → *Toch uitvoeren*). Wordt later opgelost via SignPath of Microsoft Store distributie.
+### Known
+- Self-update functionality is provided in the architecture but not yet implemented; updates must be done manually via a new download.
+- Smart App Control (Windows 11) blocks running the exe — disabling is a one-way action. Will be resolved once the app is distributed via Microsoft Store.
+- SmartScreen shows an "Unknown publisher" warning on first launch (click *More info* → *Run anyway*). Will be resolved later via SignPath or Microsoft Store distribution.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGet-Manager/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGet-Manager/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.3.0
 [0.2.5]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.2.5
 [0.2.4]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.2.4
 [0.2.3]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.2.3

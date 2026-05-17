@@ -1,50 +1,50 @@
 # Security Policy
 
-## Ondersteunde versies
+## Supported versions
 
-Alleen de meest recente release ontvangt actief beveiligingspatches.
+Only the most recent release receives active security patches.
 
-| Versie  | Ondersteund        |
+| Version | Supported          |
 | ------- | ------------------ |
 | 0.x     | :white_check_mark: |
 
-## Een kwetsbaarheid melden
+## Reporting a vulnerability
 
-Vond je een beveiligingsprobleem? Help ons door het **niet publiek** te melden in een issue, maar privé via een van de volgende kanalen:
+Found a security issue? Help us by **not** reporting it publicly in an issue. Instead, use one of these private channels:
 
-- Open een **private security advisory** op GitHub:
+- Open a **private security advisory** on GitHub:
   [github.com/Bolt-Connect/WinGet-Manager/security/advisories/new](https://github.com/Bolt-Connect/WinGet-Manager/security/advisories/new)
-- Of stuur een mail naar de beheerder via het profiel van [@Bolt-Connect](https://github.com/Bolt-Connect)
+- Or email the maintainer via the [@Bolt-Connect](https://github.com/Bolt-Connect) profile
 
-Wat te vermelden in je melding:
+What to include in your report:
 
-- Een duidelijke beschrijving van het probleem
-- Stappen om het te reproduceren
-- De impact die je voorziet (lezen van data, code uitvoeren, etc.)
-- Optioneel: een voorstel voor de fix
+- A clear description of the issue
+- Steps to reproduce
+- The impact you foresee (data read, code execution, etc.)
+- Optional: a proposed fix
 
-## Wat je kunt verwachten
+## What you can expect
 
-| Tijd  | Reactie |
-| ---- | ------- |
-| 48 uur | Eerste bevestiging dat we de melding hebben ontvangen |
-| 7 dagen | Inhoudelijke reactie met onze eerste analyse |
-| 30 dagen | Streefdatum voor een patch (afhankelijk van complexiteit) |
+| Time    | Response |
+| ------- | -------- |
+| 48 hours | Initial confirmation that we received your report |
+| 7 days   | Substantive reply with our first analysis |
+| 30 days  | Target date for a patch (depending on complexity) |
 
-Als je je verantwoordelijk meldt en ons de tijd geeft om het op te lossen, vermelden we je bij de release-notes (tenzij je anoniem wilt blijven).
+If you report responsibly and give us time to fix it, we will credit you in the release notes (unless you want to stay anonymous).
 
-## Aandachtspunten
+## Scope
 
-WinGet Manager is een wrapper rond `winget.exe`. Beveiligingsproblemen die specifiek zijn voor WinGet zelf horen niet hier — meld die bij [microsoft/winget-cli](https://github.com/microsoft/winget-cli/security).
+WinGet Manager is a wrapper around `winget.exe`. Security issues specific to WinGet itself don't belong here — report those at [microsoft/winget-cli](https://github.com/microsoft/winget-cli/security).
 
-Houd ons project gefocust op:
+Keep this project focused on:
 
-- Lokale code-execution risico's (bijv. command injection in onze wrappers)
-- Onveilige defaults of configuratie
-- Bestandspad-traversal in import/export
-- Onveilige installatie-flows
-- Privacy-issues (logging van gevoelige data)
+- Local code execution risks (e.g. command injection in our wrappers)
+- Insecure defaults or configuration
+- Path traversal in import/export
+- Insecure install flows
+- Privacy issues (logging of sensitive data)
 
 ## Disclosure
 
-Na een patch wordt het probleem publiek gemaakt via een GitHub Security Advisory met CVE indien van toepassing.
+After a patch is released, the issue is made public via a GitHub Security Advisory with a CVE if applicable.

@@ -8,9 +8,14 @@ Add-Type -AssemblyName System.Windows.Forms
 $ScriptRoot = Split-Path $PSScriptRoot -Parent | Split-Path -Parent
 Import-Module "$ScriptRoot\src\Core\Logging.psm1"      -Force
 Import-Module "$ScriptRoot\src\Core\Config.psm1"       -Force
+Import-Module "$ScriptRoot\src\Core\I18n.psm1"         -Force
 Import-Module "$ScriptRoot\src\Core\WinGet-Core.psm1"  -Force
 
 $cfg = Get-AppConfig
+try {
+    $lang = if ($cfg.Language) { $cfg.Language } else { 'auto' }
+    Initialize-I18n -Language $lang
+} catch {}
 Initialize-Logging -LogDirectory (Join-Path $ScriptRoot $cfg.LogDirectory) `
                    -MinLevel $cfg.LogLevel `
                    -RetentionDays $cfg.LogRetentionDays `
@@ -19,7 +24,7 @@ Initialize-Logging -LogDirectory (Join-Path $ScriptRoot $cfg.LogDirectory) `
 try {
     Initialize-WinGetCore -WinGetPath $cfg.WinGetPath
 } catch {
-    [System.Windows.MessageBox]::Show($_.Exception.Message, "WinGet niet gevonden", "OK", "Error") | Out-Null
+    [System.Windows.MessageBox]::Show($_.Exception.Message, (Get-Text 'Status.WinGetMissing'), "OK", "Error") | Out-Null
     exit 1
 }
 
@@ -395,9 +400,9 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="BtnCheckUpdates" Content="🔄 Controleer updates"
+                    <Button x:Name="BtnCheckUpdates" Content="{{Header.CheckUpdates}}"
                             Style="{StaticResource BtnGhost}"/>
-                    <Button x:Name="BtnSelfUpdate"   Content="⬆ App updaten"
+                    <Button x:Name="BtnSelfUpdate"   Content="{{Header.SelfUpdate}}"
                             Style="{StaticResource BtnYellow}"/>
                 </StackPanel>
             </Grid>
@@ -407,7 +412,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
         <TabControl x:Name="MainTabs" Grid.Row="1" Margin="0">
 
             <!-- ─ Tab 1: Zoeken & Installeren ─ -->
-            <TabItem x:Name="TabSearch" Header="🔍  Zoeken">
+            <TabItem x:Name="TabSearch" Header="{{Tab.Search}}">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -424,20 +429,20 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0" Margin="0,0,8,0">
-                            <TextBox x:Name="TxtSearch" Text="" Tag="Zoek packages..." FontSize="14"
+                            <TextBox x:Name="TxtSearch" Text="" Tag="{{Search.Placeholder}}" FontSize="14"
                                      Padding="40,9,14,9"/>
                             <TextBlock Text="🔍" FontSize="14" Foreground="#6C7086"
                                        HorizontalAlignment="Left" VerticalAlignment="Center"
                                        Margin="14,0,0,0" IsHitTestVisible="False"/>
                         </Grid>
                         <ComboBox x:Name="CmbSearchSource" Grid.Column="1" Margin="0,0,8,0">
-                            <ComboBoxItem Content="Alle bronnen" IsSelected="True"/>
-                            <ComboBoxItem Content="winget"/>
-                            <ComboBoxItem Content="msstore"/>
+                            <ComboBoxItem Content="{{Source.AllSources}}" Tag="" IsSelected="True"/>
+                            <ComboBoxItem Content="winget" Tag="winget"/>
+                            <ComboBoxItem Content="msstore" Tag="msstore"/>
                         </ComboBox>
-                        <Button x:Name="BtnSearch" Grid.Column="2" Content="🔍 Zoeken"
+                        <Button x:Name="BtnSearch" Grid.Column="2" Content="{{Btn.Search}}"
                                 Style="{StaticResource BtnBlue}" Margin="0,0,8,0"/>
-                        <Button x:Name="BtnClearSearch" Grid.Column="3" Content="✕ Wissen"
+                        <Button x:Name="BtnClearSearch" Grid.Column="3" Content="{{Btn.Clear}}"
                                 Style="{StaticResource BtnGhost}"/>
                     </Grid>
 
@@ -446,14 +451,14 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                         <DataGrid x:Name="GridSearch" IsReadOnly="True"
                                   SelectionMode="Single" CanUserSortColumns="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="NAAM"    Binding="{Binding Name}"    Width="250"/>
-                                <DataGridTextColumn Header="ID"      Binding="{Binding Id}"      Width="250"/>
-                                <DataGridTextColumn Header="VERSIE"  Binding="{Binding Version}" Width="100"/>
-                                <DataGridTextColumn Header="BRON"    Binding="{Binding Source}"  Width="100"/>
+                                <DataGridTextColumn Header="{{Col.Name}}"    Binding="{Binding Name}"    Width="250"/>
+                                <DataGridTextColumn Header="{{Col.Id}}"      Binding="{Binding Id}"      Width="250"/>
+                                <DataGridTextColumn Header="{{Col.Version}}" Binding="{Binding Version}" Width="100"/>
+                                <DataGridTextColumn Header="{{Col.Source}}"  Binding="{Binding Source}"  Width="100"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptySearch"
-                                   Text="🔍  Typ minimaal 2 tekens om te zoeken"
+                                   Text="{{Search.Empty}}"
                                    Foreground="#6C7086" FontSize="14"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    IsHitTestVisible="False"/>
@@ -461,9 +466,9 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
 
                     <!-- Actieknoppen -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
-                        <Button x:Name="BtnInstallSelected" Content="⬇ Installeren"
+                        <Button x:Name="BtnInstallSelected" Content="{{Btn.Install}}"
                                 Style="{StaticResource BtnGreen}" Margin="0,0,8,0" IsEnabled="False"/>
-                        <Button x:Name="BtnShowDetails" Content="ℹ Details"
+                        <Button x:Name="BtnShowDetails" Content="{{Btn.Details}}"
                                 Style="{StaticResource BtnGhost}" IsEnabled="False"/>
                     </StackPanel>
                 </Grid>
@@ -473,7 +478,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             <TabItem x:Name="TabInstalled">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📦  Geïnstalleerd" VerticalAlignment="Center"/>
+                        <TextBlock Text="{{Tab.Installed}}" VerticalAlignment="Center"/>
                         <Border x:Name="BadgeInstalled" Background="#89B4FA" CornerRadius="10"
                                 Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
                                 Visibility="Collapsed">
@@ -495,25 +500,25 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <ColumnDefinition Width="130"/>
                         </Grid.ColumnDefinitions>
                         <Grid Margin="0,0,8,0">
-                            <TextBox x:Name="TxtFilterInstalled" Tag="Filter op naam of ID..." Padding="40,9,14,9"/>
+                            <TextBox x:Name="TxtFilterInstalled" Tag="{{Installed.FilterPlaceholder}}" Padding="40,9,14,9"/>
                             <TextBlock Text="🔍" FontSize="14" Foreground="#6C7086"
                                        HorizontalAlignment="Left" VerticalAlignment="Center"
                                        Margin="14,0,0,0" IsHitTestVisible="False"/>
                         </Grid>
                         <Button x:Name="BtnRefreshInstalled" Grid.Column="1"
-                                Content="↺ Vernieuwen" Style="{StaticResource BtnBlue}"/>
+                                Content="{{Btn.Refresh}}" Style="{StaticResource BtnBlue}"/>
                     </Grid>
 
                     <Grid Grid.Row="1">
                         <DataGrid x:Name="GridInstalled" IsReadOnly="True" CanUserSortColumns="True"
                                   SelectionMode="Extended">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="NAAM"        Binding="{Binding Name}"             Width="200"/>
-                                <DataGridTextColumn Header="ID"          Binding="{Binding Id}"               Width="220"/>
-                                <DataGridTextColumn Header="VERSIE"      Binding="{Binding Version}"          Width="100"/>
-                                <DataGridTextColumn Header="BESCHIKBAAR" Binding="{Binding AvailableVersion}" Width="100"/>
-                                <DataGridTextColumn Header="BRON"        Binding="{Binding Source}"           Width="90"/>
-                                <DataGridTemplateColumn Header="STATUS" Width="120">
+                                <DataGridTextColumn Header="{{Col.Name}}"        Binding="{Binding Name}"             Width="200"/>
+                                <DataGridTextColumn Header="{{Col.Id}}"          Binding="{Binding Id}"               Width="220"/>
+                                <DataGridTextColumn Header="{{Col.Version}}"     Binding="{Binding Version}"          Width="100"/>
+                                <DataGridTextColumn Header="{{Col.Available}}"   Binding="{Binding AvailableVersion}" Width="100"/>
+                                <DataGridTextColumn Header="{{Col.Source}}"      Binding="{Binding Source}"           Width="90"/>
+                                <DataGridTemplateColumn Header="{{Col.Status}}" Width="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Border CornerRadius="3" Padding="8,3" HorizontalAlignment="Left"
@@ -547,7 +552,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptyInstalled"
-                                   Text="📦  Bezig met laden..."
+                                   Text="{{Installed.Loading}}"
                                    Foreground="#6C7086" FontSize="14"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    IsHitTestVisible="False"/>
@@ -556,9 +561,9 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
                         <TextBlock x:Name="TxtInstalledCount" Foreground="#6C7086" FontSize="12"
                                    VerticalAlignment="Center" Margin="0,0,16,0"/>
-                        <Button x:Name="BtnUninstallSelected" Content="🗑 Verwijderen"
+                        <Button x:Name="BtnUninstallSelected" Content="{{Btn.Uninstall}}"
                                 Style="{StaticResource BtnRed}" Margin="0,0,8,0" IsEnabled="False"/>
-                        <Button x:Name="BtnUpdateSelectedInstalled" Content="⬆ Update geselecteerde"
+                        <Button x:Name="BtnUpdateSelectedInstalled" Content="{{Btn.UpdateSelectedInst}}"
                                 Style="{StaticResource BtnGreen}" IsEnabled="False"/>
                     </StackPanel>
                 </Grid>
@@ -568,7 +573,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             <TabItem x:Name="TabUpdates">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⬆  Updates" VerticalAlignment="Center"/>
+                        <TextBlock Text="{{Tab.Updates}}" VerticalAlignment="Center"/>
                         <Border x:Name="BadgeUpdates" Background="#A6E3A1" CornerRadius="10"
                                 Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
                                 Visibility="Collapsed">
@@ -589,12 +594,12 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <Border Grid.Row="0" Background="#313149" CornerRadius="8" Padding="16,10" Margin="0,0,0,16">
                         <StackPanel Orientation="Horizontal">
                             <StackPanel>
-                                <TextBlock Text="Beschikbare updates" Foreground="#6C7086" FontSize="11"/>
+                                <TextBlock Text="{{Updates.AvailableLabel}}" Foreground="#6C7086" FontSize="11"/>
                                 <TextBlock x:Name="TxtUpdateCount" Text="–" Foreground="#89B4FA"
                                            FontSize="24" FontWeight="Bold"/>
                             </StackPanel>
                             <StackPanel>
-                                <TextBlock Text="WinGet versie" Foreground="#6C7086" FontSize="11"/>
+                                <TextBlock Text="{{Updates.WinGetVersion}}" Foreground="#6C7086" FontSize="11"/>
                                 <TextBlock x:Name="TxtWinGetVersion" Text="–" Foreground="#A6E3A1"
                                            FontSize="24" FontWeight="Bold"/>
                             </StackPanel>
@@ -607,15 +612,15 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                             <DataGrid.Columns>
                                 <DataGridCheckBoxColumn Header="" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                                         Width="36"/>
-                                <DataGridTextColumn Header="NAAM"              Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="ID"                Binding="{Binding Id}"               Width="220" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="HUIDIG"            Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="BESCHIKBAAR"       Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
-                                <DataGridTextColumn Header="BRON"              Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="{{Col.Name}}"        Binding="{Binding Name}"             Width="230" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="{{Col.Id}}"          Binding="{Binding Id}"               Width="220" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="{{Col.Current}}"     Binding="{Binding Version}"          Width="110" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="{{Col.Available}}"   Binding="{Binding AvailableVersion}" Width="110" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="{{Col.Source}}"      Binding="{Binding Source}"           Width="100" IsReadOnly="True"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptyUpdates"
-                                   Text="✓  Alle packages zijn up-to-date 🎉"
+                                   Text="{{Updates.AllUpToDate}}"
                                    Foreground="#A6E3A1" FontSize="14"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    IsHitTestVisible="False" Visibility="Collapsed"/>
@@ -626,18 +631,18 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                  Visibility="Collapsed" IsIndeterminate="True"/>
 
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
-                        <Button x:Name="BtnRefreshUpdates" Content="↺ Vernieuwen"
+                        <Button x:Name="BtnRefreshUpdates" Content="{{Btn.Refresh}}"
                                 Style="{StaticResource BtnGhost}" Margin="0,0,8,0"/>
-                        <Button x:Name="BtnUpdateSelected" Content="⬆ Selectie updaten"
+                        <Button x:Name="BtnUpdateSelected" Content="{{Btn.UpdateSelected}}"
                                 Style="{StaticResource BtnGreen}" Margin="0,0,8,0" IsEnabled="False"/>
-                        <Button x:Name="BtnUpdateAll" Content="🚀 Alles updaten"
+                        <Button x:Name="BtnUpdateAll" Content="{{Btn.UpdateAll}}"
                                 Style="{StaticResource BtnBlue}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
 
             <!-- ─ Tab 4: Import / Export ─ -->
-            <TabItem Header="📂  Import/Export">
+            <TabItem Header="{{Tab.ImportExport}}">
                 <Grid Margin="30">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -648,11 +653,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <!-- Export -->
                     <Border Grid.Column="0" Background="#313149" CornerRadius="12" Padding="24">
                         <StackPanel>
-                            <TextBlock Text="📤  Exporteren" FontSize="16" FontWeight="SemiBold"
+                            <TextBlock Text="{{Section.Export}}" FontSize="16" FontWeight="SemiBold"
                                        Foreground="#89B4FA" Margin="0,0,0,12"/>
                             <TextBlock TextWrapping="Wrap" Foreground="#6C7086" Margin="0,0,0,20"
-                                       Text="Sla alle geïnstalleerde packages op in een JSON-bestand. Handig als back-up of om op een andere computer te installeren."/>
-                            <Label Content="Exportbestand:"/>
+                                       Text="{{Export.Description}}"/>
+                            <Label Content="{{Export.FileLabel}}"/>
                             <Grid Margin="0,4,0,16">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -663,7 +668,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <Button x:Name="BtnBrowseExport" Grid.Column="1"
                                         Content="..." Style="{StaticResource BtnGhost}" Padding="12,6"/>
                             </Grid>
-                            <Button x:Name="BtnExport" Content="⬇ Nu exporteren"
+                            <Button x:Name="BtnExport" Content="{{Btn.ExportNow}}"
                                     Style="{StaticResource BtnGreen}" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </Border>
@@ -671,11 +676,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <!-- Import -->
                     <Border Grid.Column="2" Background="#313149" CornerRadius="12" Padding="24">
                         <StackPanel>
-                            <TextBlock Text="📥  Importeren" FontSize="16" FontWeight="SemiBold"
+                            <TextBlock Text="{{Section.Import}}" FontSize="16" FontWeight="SemiBold"
                                        Foreground="#89B4FA" Margin="0,0,0,12"/>
                             <TextBlock TextWrapping="Wrap" Foreground="#6C7086" Margin="0,0,0,20"
-                                       Text="Installeer alle packages uit een bestaand JSON-exportbestand. Niet-beschikbare packages worden overgeslagen indien gewenst."/>
-                            <Label Content="Importbestand:"/>
+                                       Text="{{Import.Description}}"/>
+                            <Label Content="{{Import.FileLabel}}"/>
                             <Grid Margin="0,4,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -685,9 +690,9 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <Button x:Name="BtnBrowseImport" Grid.Column="1"
                                         Content="..." Style="{StaticResource BtnGhost}" Padding="12,6"/>
                             </Grid>
-                            <CheckBox x:Name="ChkIgnoreUnavailable" Content="Niet-beschikbare packages overslaan"
+                            <CheckBox x:Name="ChkIgnoreUnavailable" Content="{{Import.IgnoreUnavailable}}"
                                       IsChecked="True" Margin="0,4,0,16" Foreground="#CDD6F4"/>
-                            <Button x:Name="BtnImport" Content="⬆ Nu importeren"
+                            <Button x:Name="BtnImport" Content="{{Btn.ImportNow}}"
                                     Style="{StaticResource BtnBlue}" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </Border>
@@ -698,7 +703,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             <TabItem x:Name="TabSources">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="🔗  Bronnen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{{Tab.Sources}}" VerticalAlignment="Center"/>
                         <Border x:Name="BadgeSources" Background="#89B4FA" CornerRadius="10"
                                 Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
                                 Visibility="Collapsed">
@@ -718,21 +723,21 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <Border Grid.Row="0" Background="#313149" CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
                         <StackPanel>
                             <TextBlock FontSize="13" Foreground="#CDD6F4" TextWrapping="Wrap">
-                                <Run Text="Bronnen zijn de pakketten-repos die WinGet gebruikt. " FontWeight="SemiBold"/>
-                                <Run Text="Standaard staan er twee:"/>
+                                <Run Text="{{Sources.IntroBold}}" FontWeight="SemiBold"/>
+                                <Run Text="{{Sources.IntroDefault}}"/>
                             </TextBlock>
                             <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap" Margin="0,6,0,0">
                                 <Run Text="• "/>
                                 <Run Text="winget" FontWeight="SemiBold" Foreground="#89B4FA"/>
-                                <Run Text=" — Microsofts officiele community-repo (~6000 apps zoals Firefox, Chrome, VSCode)"/>
+                                <Run Text="{{Sources.WingetDesc}}"/>
                             </TextBlock>
                             <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap">
                                 <Run Text="• "/>
                                 <Run Text="msstore" FontWeight="SemiBold" Foreground="#89B4FA"/>
-                                <Run Text=" — Microsoft Store apps (Spotify, WhatsApp, Netflix, etc.)"/>
+                                <Run Text="{{Sources.MsstoreDesc}}"/>
                             </TextBlock>
                             <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap" Margin="0,8,0,0">
-                                <Run Text="Hier kun je een eigen bron toevoegen (bijvoorbeeld een corporate-repo), bestaande bronnen verwijderen, of resetten naar de standaard."/>
+                                <Run Text="{{Sources.Outro}}"/>
                             </TextBlock>
                         </StackPanel>
                     </Border>
@@ -740,13 +745,13 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <Grid Grid.Row="1">
                         <DataGrid x:Name="GridSources" IsReadOnly="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="NAAM" Binding="{Binding Name}" Width="150"/>
-                                <DataGridTextColumn Header="URL"  Binding="{Binding Url}"  Width="*"/>
-                                <DataGridTextColumn Header="TYPE" Binding="{Binding Type}" Width="180"/>
+                                <DataGridTextColumn Header="{{Col.Name}}" Binding="{Binding Name}" Width="150"/>
+                                <DataGridTextColumn Header="{{Col.Url}}"  Binding="{Binding Url}"  Width="*"/>
+                                <DataGridTextColumn Header="{{Col.Type}}" Binding="{Binding Type}" Width="180"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBlock x:Name="EmptySources"
-                                   Text="🔗  Geen bronnen geconfigureerd"
+                                   Text="{{Sources.None}}"
                                    Foreground="#6C7086" FontSize="14"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    IsHitTestVisible="False" Visibility="Collapsed"/>
@@ -765,33 +770,33 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="160"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Column="0" Content="Naam:" VerticalAlignment="Center"/>
+                            <Label Grid.Column="0" Content="{{Field.Name}}" VerticalAlignment="Center"/>
                             <TextBox x:Name="TxtSourceName" Grid.Column="1" Margin="4,0,12,0"/>
-                            <Label Grid.Column="2" Content="URL:" VerticalAlignment="Center"/>
+                            <Label Grid.Column="2" Content="{{Field.Url}}" VerticalAlignment="Center"/>
                             <TextBox x:Name="TxtSourceUrl" Grid.Column="3" Margin="4,0,12,0"/>
-                            <Label Grid.Column="4" Content="Type:" VerticalAlignment="Center"/>
+                            <Label Grid.Column="4" Content="{{Field.Type}}" VerticalAlignment="Center"/>
                             <ComboBox x:Name="CmbSourceType" Grid.Column="5" Margin="4,0,12,0">
                                 <ComboBoxItem Content="Microsoft.Rest" IsSelected="True"/>
                                 <ComboBoxItem Content="Microsoft.PreIndexed.Package"/>
                             </ComboBox>
-                            <Button x:Name="BtnAddSource" Grid.Column="6" Content="➕ Toevoegen"
+                            <Button x:Name="BtnAddSource" Grid.Column="6" Content="{{Btn.Add}}"
                                     Style="{StaticResource BtnGreen}"/>
                         </Grid>
                     </Border>
 
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Right">
-                        <Button x:Name="BtnRefreshSources" Content="↺ Vernieuwen"
+                        <Button x:Name="BtnRefreshSources" Content="{{Btn.Refresh}}"
                                 Style="{StaticResource BtnGhost}" Margin="0,0,8,0"/>
-                        <Button x:Name="BtnRemoveSource" Content="🗑 Verwijderen"
+                        <Button x:Name="BtnRemoveSource" Content="{{Btn.RemoveSource}}"
                                 Style="{StaticResource BtnRed}" Margin="0,0,8,0" IsEnabled="False"/>
-                        <Button x:Name="BtnResetSources" Content="↩ Reset standaard"
+                        <Button x:Name="BtnResetSources" Content="{{Btn.ResetSources}}"
                                 Style="{StaticResource BtnYellow}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
 
             <!-- ─ Tab 6: Logs ─ -->
-            <TabItem Header="📋  Logs">
+            <TabItem Header="{{Tab.Logs}}">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -800,15 +805,15 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                         <ComboBox x:Name="CmbLogFilter" Width="120" Margin="0,0,8,0">
-                            <ComboBoxItem Content="Alle" IsSelected="True"/>
-                            <ComboBoxItem Content="DEBUG"/>
-                            <ComboBoxItem Content="INFO"/>
-                            <ComboBoxItem Content="WARN"/>
-                            <ComboBoxItem Content="ERROR"/>
+                            <ComboBoxItem Content="{{Logs.LevelAll}}" Tag="" IsSelected="True"/>
+                            <ComboBoxItem Content="DEBUG" Tag="DEBUG"/>
+                            <ComboBoxItem Content="INFO"  Tag="INFO"/>
+                            <ComboBoxItem Content="WARN"  Tag="WARN"/>
+                            <ComboBoxItem Content="ERROR" Tag="ERROR"/>
                         </ComboBox>
-                        <Button x:Name="BtnClearLogs" Content="🗑 Wissen"
+                        <Button x:Name="BtnClearLogs" Content="{{Btn.ClearLogs}}"
                                 Style="{StaticResource BtnGhost}" Margin="0,0,8,0"/>
-                        <Button x:Name="BtnOpenLogFile" Content="📁 Open logbestand"
+                        <Button x:Name="BtnOpenLogFile" Content="{{Btn.OpenLogFile}}"
                                 Style="{StaticResource BtnGhost}"/>
                         <TextBlock x:Name="TxtLogPath" Foreground="#6C7086" FontSize="11"
                                    VerticalAlignment="Center" Margin="16,0,0,0"/>
@@ -818,10 +823,10 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                               CanUserSortColumns="False" FontFamily="Consolas" FontSize="12"
                               AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="TIJDSTIP"  Binding="{Binding Timestamp, Mode=OneWay}" Width="180"/>
-                            <DataGridTextColumn Header="LEVEL"     Binding="{Binding Level, Mode=OneWay}"     Width="70"/>
-                            <DataGridTextColumn Header="BRON"      Binding="{Binding Source, Mode=OneWay}"    Width="120"/>
-                            <DataGridTextColumn Header="BERICHT"   Binding="{Binding Message, Mode=OneWay}"   Width="*"/>
+                            <DataGridTextColumn Header="{{Col.Timestamp}}"  Binding="{Binding Timestamp, Mode=OneWay}" Width="180"/>
+                            <DataGridTextColumn Header="{{Col.Level}}"      Binding="{Binding Level, Mode=OneWay}"     Width="70"/>
+                            <DataGridTextColumn Header="{{Col.Source}}"     Binding="{Binding Source, Mode=OneWay}"    Width="120"/>
+                            <DataGridTextColumn Header="{{Col.Message}}"    Binding="{Binding Message, Mode=OneWay}"   Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -845,11 +850,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
             </TabItem>
 
             <!-- ─ Tab 7: Instellingen ─ -->
-            <TabItem Header="⚙  Instellingen">
+            <TabItem Header="{{Tab.Settings}}">
                 <ScrollViewer Margin="20" VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="600" HorizontalAlignment="Left">
 
-                        <TextBlock Text="Logging" FontSize="15" FontWeight="SemiBold"
+                        <TextBlock Text="{{Settings.Logging}}" FontSize="15" FontWeight="SemiBold"
                                    Foreground="#89B4FA" Margin="0,0,0,12"/>
 
                         <Grid Margin="0,0,0,8">
@@ -857,7 +862,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Log-map:" VerticalAlignment="Center"/>
+                            <Label Content="{{Settings.LogDir}}" VerticalAlignment="Center"/>
                             <TextBox x:Name="TxtSettingsLogDir" Grid.Column="1"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
@@ -865,7 +870,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Minimaal niveau:" VerticalAlignment="Center"/>
+                            <Label Content="{{Settings.MinLevel}}" VerticalAlignment="Center"/>
                             <ComboBox x:Name="CmbSettingsLogLevel" Grid.Column="1">
                                 <ComboBoxItem Content="DEBUG"/>
                                 <ComboBoxItem Content="INFO" IsSelected="True"/>
@@ -878,11 +883,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Bewaarperiode (dagen):" VerticalAlignment="Center"/>
+                            <Label Content="{{Settings.RetentionDays}}" VerticalAlignment="Center"/>
                             <TextBox x:Name="TxtSettingsRetention" Grid.Column="1" Text="30"/>
                         </Grid>
 
-                        <TextBlock Text="Gedrag" FontSize="15" FontWeight="SemiBold"
+                        <TextBlock Text="{{Settings.Behavior}}" FontSize="15" FontWeight="SemiBold"
                                    Foreground="#89B4FA" Margin="0,0,0,12"/>
 
                         <Grid Margin="0,0,0,8">
@@ -890,7 +895,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Standaard scope:" VerticalAlignment="Center"/>
+                            <Label Content="{{Settings.DefaultScope}}" VerticalAlignment="Center"/>
                             <ComboBox x:Name="CmbSettingsScope" Grid.Column="1">
                                 <ComboBoxItem Content="user" IsSelected="True"/>
                                 <ComboBoxItem Content="machine"/>
@@ -902,25 +907,38 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Thema:" VerticalAlignment="Center"/>
+                            <Label Content="{{Settings.Theme}}" VerticalAlignment="Center"/>
                             <ComboBox x:Name="CmbSettingsTheme" Grid.Column="1">
-                                <ComboBoxItem Content="Auto" IsSelected="True"/>
-                                <ComboBoxItem Content="Dark"/>
-                                <ComboBoxItem Content="Light"/>
+                                <ComboBoxItem Content="{{Theme.Auto}}" IsSelected="True"/>
+                                <ComboBoxItem Content="{{Theme.Dark}}"/>
+                                <ComboBoxItem Content="{{Theme.Light}}"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{{Settings.LanguageLabel}}" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="CmbSettingsLanguage" Grid.Column="1">
+                                <ComboBoxItem Content="{{Language.Auto}}"    Tag="auto" IsSelected="True"/>
+                                <ComboBoxItem Content="{{Language.Dutch}}"   Tag="nl-NL"/>
+                                <ComboBoxItem Content="{{Language.English}}" Tag="en-US"/>
                             </ComboBox>
                         </Grid>
 
                         <CheckBox x:Name="ChkAutoUpdateCheck"
-                                  Content="Controleer updates bij opstarten"
+                                  Content="{{Settings.AutoUpdateCheck}}"
                                   IsChecked="True" Margin="0,4,0,4"/>
                         <CheckBox x:Name="ChkConfirmUninstall"
-                                  Content="Bevestiging vragen bij verwijderen"
+                                  Content="{{Settings.ConfirmUninstall}}"
                                   IsChecked="True" Margin="0,4,0,4"/>
                         <CheckBox x:Name="ChkConfirmUpdate"
-                                  Content="Bevestiging vragen bij updaten"
+                                  Content="{{Settings.ConfirmUpdate}}"
                                   IsChecked="False" Margin="0,4,0,24"/>
 
-                        <TextBlock Text="Zelf-update" FontSize="15" FontWeight="SemiBold"
+                        <TextBlock Text="{{Settings.SelfUpdate}}" FontSize="15" FontWeight="SemiBold"
                                    Foreground="#89B4FA" Margin="0,0,0,12"/>
 
                         <Grid Margin="0,0,0,24">
@@ -928,18 +946,18 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <ColumnDefinition Width="200"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Label Content="Update URL:" VerticalAlignment="Center"/>
+                            <Label Content="{{Settings.UpdateUrl}}" VerticalAlignment="Center"/>
                             <TextBox x:Name="TxtSettingsUpdateUrl" Grid.Column="1"/>
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,32">
-                            <Button x:Name="BtnSaveSettings" Content="💾 Opslaan"
+                            <Button x:Name="BtnSaveSettings" Content="{{Btn.Save}}"
                                     Style="{StaticResource BtnGreen}" Margin="0,0,8,0"/>
-                            <Button x:Name="BtnResetSettings" Content="↩ Standaard herstellen"
+                            <Button x:Name="BtnResetSettings" Content="{{Btn.ResetDefaults}}"
                                     Style="{StaticResource BtnGhost}"/>
                         </StackPanel>
 
-                        <TextBlock Text="Sneltoetsen" FontSize="15" FontWeight="SemiBold"
+                        <TextBlock Text="{{Settings.Shortcuts}}" FontSize="15" FontWeight="SemiBold"
                                    Foreground="#89B4FA" Margin="0,0,0,12"/>
 
                         <Border Background="#313149" CornerRadius="8" Padding="16">
@@ -959,29 +977,29 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="F5"        Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Vernieuw huidige tab"               Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{{Shortcut.RefreshTab}}"             Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Ctrl + F"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="Spring naar Zoeken-tab"             Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{{Shortcut.JumpSearch}}"            Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
 
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Ctrl + R"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="Open Updates-tab en check"          Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{{Shortcut.OpenUpdates}}"           Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
 
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Ctrl + L"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="Open Logs-tab"                      Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{{Shortcut.OpenLogs}}"              Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
 
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Ctrl + W"  Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
-                                <TextBlock Grid.Row="4" Grid.Column="1" Text="Sluit de app"                       Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{{Shortcut.Close}}"                 Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
 
                                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Esc"       Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13" Margin="0,0,0,6"/>
-                                <TextBlock Grid.Row="5" Grid.Column="1" Text="Wis zoekveld op Zoeken-tab"         Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{{Shortcut.ClearSearch}}"           Foreground="#CDD6F4" FontSize="13" Margin="0,0,0,6"/>
 
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="Enter"     Foreground="#F9E2AF" FontFamily="Consolas" FontSize="13"/>
-                                <TextBlock Grid.Row="6" Grid.Column="1" Text="In zoekveld: directe zoekactie (skip 400ms wachten)" Foreground="#CDD6F4" FontSize="13"/>
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{{Shortcut.EnterSearch}}" Foreground="#CDD6F4" FontSize="13"/>
                             </Grid>
                         </Border>
 
-                        <TextBlock Text="Tip: Ctrl/Shift-klik in Geïnstalleerd voor multi-select bulk-acties."
+                        <TextBlock Text="{{Settings.MultiSelectTip}}"
                                    Foreground="#6C7086" FontSize="11" Margin="0,8,0,0" FontStyle="Italic"/>
                     </StackPanel>
                 </ScrollViewer>
@@ -998,7 +1016,7 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                     <ColumnDefinition Width="180"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="TxtStatus" Text="Gereed" Foreground="#6C7086"
+                <TextBlock x:Name="TxtStatus" Text="{{Status.Ready}}" Foreground="#6C7086"
                            FontSize="12" VerticalAlignment="Center"/>
                 <ProgressBar x:Name="StatusProgress" Grid.Column="1"
                              Width="150" Height="4" Margin="0,0,16,0"
@@ -1019,6 +1037,8 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
 
 # Theme altijd toepassen (ook Dark, want palette kan vibranter zijn dan XAML-base)
 $xamlString = $Xaml.OuterXml
+# i18n eerst: vervang {{Key}} placeholders door vertaalde strings
+$xamlString = Apply-Translations -Text $xamlString
 $xamlString = Apply-ThemeColors -xamlText $xamlString -ThemeName $ActiveTheme
 [xml]$ThemedXaml = $xamlString
 $Reader = [System.Xml.XmlNodeReader]::new($ThemedXaml)
@@ -1082,6 +1102,7 @@ $CmbSettingsLogLevel     = Get-Control 'CmbSettingsLogLevel'
 $TxtSettingsRetention    = Get-Control 'TxtSettingsRetention'
 $CmbSettingsScope        = Get-Control 'CmbSettingsScope'
 $CmbSettingsTheme        = Get-Control 'CmbSettingsTheme'
+$CmbSettingsLanguage     = Get-Control 'CmbSettingsLanguage'
 $ChkAutoUpdateCheck      = Get-Control 'ChkAutoUpdateCheck'
 $ChkConfirmUninstall     = Get-Control 'ChkConfirmUninstall'
 $ChkConfirmUpdate        = Get-Control 'ChkConfirmUpdate'
@@ -1148,8 +1169,8 @@ function Ask-ConfirmEx {
         return $true
     }
 
-    # Pas thema toe op de dialog-XAML
-    [xml]$dlgXaml = Apply-ThemeColors -ThemeName $ActiveTheme -xamlText @"
+    # Pas thema + vertaling toe op de dialog-XAML
+    [xml]$dlgXaml = Apply-ThemeColors -ThemeName $ActiveTheme -xamlText (Apply-Translations -Text @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="$Title" Height="220" Width="480" ShowInTaskbar="False"
@@ -1166,14 +1187,14 @@ function Ask-ConfirmEx {
         <CheckBox x:Name="ChkSkip" Grid.Row="1" Foreground="#6C7086" FontSize="12"
                   Content="Niet meer vragen voor deze actie" Margin="0,16,0,0"/>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button x:Name="BtnYes" Content="Ja" Width="90" Height="32" Margin="0,0,8,0"
+            <Button x:Name="BtnYes" Content="{{Btn.Yes}}" Width="90" Height="32" Margin="0,0,8,0"
                     Background="#89B4FA" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand"/>
-            <Button x:Name="BtnNo" Content="Nee" Width="90" Height="32"
+            <Button x:Name="BtnNo" Content="{{Btn.No}}" Width="90" Height="32"
                     Background="#313149" Foreground="#CDD6F4" BorderThickness="0" Cursor="Hand"/>
         </StackPanel>
     </Grid>
 </Window>
-"@
+"@)
 
     $dlg = [System.Windows.Markup.XamlReader]::Load([System.Xml.XmlNodeReader]::new($dlgXaml))
     $dlg.Owner = $Window
@@ -1197,9 +1218,9 @@ function Ask-ConfirmEx {
         try {
             Set-ConfigValue -Key $ConfigKeyToDisable -Value $false
             $script:cfg = Get-AppConfig
-            Write-Log "Config '$ConfigKeyToDisable' uitgeschakeld op verzoek" -Source GUI
+            Write-Log "Config '$ConfigKeyToDisable' disabled on request" -Source GUI
         } catch {
-            Write-Log "Config update mislukt: $_" -Level WARN -Source GUI
+            Write-Log "Config update failed: $_" -Level WARN -Source GUI
         }
     }
 
@@ -1208,15 +1229,15 @@ function Ask-ConfirmEx {
 
 # --- WinGet exit codes -> menselijke teksten + actie suggesties -------------
 $Script:WinGetErrors = @{
-    -1978335212 = @{ Msg = "Geen updates beschikbaar"; Action = 'none' }
-    -1978335189 = @{ Msg = "Geen pakketten gevonden voor deze ID"; Action = 'none' }
-    -1978335188 = @{ Msg = "Meerdere pakketten gevonden, ID is niet uniek"; Action = 'none' }
-    -1978335162 = @{ Msg = "Pakketovereenkomst niet geaccepteerd"; Action = 'none' }
-    -1978334969 = @{ Msg = "Onvoldoende rechten - update vereist administrator"; Action = 'elevate' }
-    -1978334964 = @{ Msg = "App draait nog en kan niet worden bijgewerkt"; Action = 'kill' }
-    -1978334960 = @{ Msg = "Hashverificatie mislukt - download corrupt"; Action = 'retry' }
-    -1978335211 = @{ Msg = "Internet niet beschikbaar"; Action = 'retry' }
-    -1978334968 = @{ Msg = "Schijf vol"; Action = 'none' }
+    -1978335212 = @{ Msg = (Get-Text 'Err.NoUpdatesAvailable'); Action = 'none' }
+    -1978335189 = @{ Msg = (Get-Text 'Err.PackageNotFound'); Action = 'none' }
+    -1978335188 = @{ Msg = (Get-Text 'Err.MultiplePackages'); Action = 'none' }
+    -1978335162 = @{ Msg = (Get-Text 'Err.AgreementNotAccepted'); Action = 'none' }
+    -1978334969 = @{ Msg = (Get-Text 'Err.NeedsAdmin'); Action = 'elevate' }
+    -1978334964 = @{ Msg = (Get-Text 'Err.AppRunning'); Action = 'kill' }
+    -1978334960 = @{ Msg = (Get-Text 'Err.HashMismatch'); Action = 'retry' }
+    -1978335211 = @{ Msg = (Get-Text 'Err.NoInternet'); Action = 'retry' }
+    -1978334968 = @{ Msg = (Get-Text 'Err.DiskFull'); Action = 'none' }
 }
 
 function Get-WinGetErrorInfo {
@@ -1294,12 +1315,12 @@ function Start-WinGetWork {
                 $r = $ps.EndInvoke($handle) | Select-Object -First 1
                 if ($r) { $exit = [int]$r.ExitCode; $output = "$($r.Output)" }
             } catch {
-                Write-Log "Async fout: $_" -Level ERROR -Source GUI
+                Write-Log "Async error: $_" -Level ERROR -Source GUI
             } finally {
                 $ps.Dispose(); $rs.Dispose()
             }
             $Window.IsEnabled = $true
-            try { & $OnDone $exit $output } catch { Write-Log "OnDone fout: $_" -Level ERROR -Source GUI }
+            try { & $OnDone $exit $output } catch { Write-Log "OnDone error: $_" -Level ERROR -Source GUI }
         }
     }.GetNewClosure()
 
@@ -1325,6 +1346,7 @@ function Run-Async {
     $init = {
         Import-Module "$ScriptRoot\src\Core\Logging.psm1"     -Force
         Import-Module "$ScriptRoot\src\Core\Config.psm1"      -Force
+        Import-Module "$ScriptRoot\src\Core\I18n.psm1"        -Force
         Import-Module "$ScriptRoot\src\Core\WinGet-Core.psm1" -Force
         Initialize-WinGetCore -WinGetPath $cfg.WinGetPath
         Set-LogObservable $LogCollection
@@ -1338,7 +1360,7 @@ function Run-Async {
         if ($handle.IsCompleted) {
             $timer.Stop()
             try   { $ps.EndInvoke($handle) }
-            catch { Write-Log "Async fout: $_" -Level ERROR -Source GUI }
+            catch { Write-Log "Async error: $_" -Level ERROR -Source GUI }
             $ps.Dispose(); $rs.Dispose()
             $Window.Dispatcher.Invoke($OnDone)
         }
@@ -1375,6 +1397,11 @@ $themePref = if ($cfg.Theme) { $cfg.Theme } else { 'Auto' }
 foreach ($item in $CmbSettingsTheme.Items) {
     if ($item.Content -eq $themePref) { $CmbSettingsTheme.SelectedItem = $item; break }
 }
+# Taal: selecteer op basis van Tag (auto/nl-NL/en-US)
+$langPref = if ($cfg.Language) { $cfg.Language } else { 'auto' }
+foreach ($item in $CmbSettingsLanguage.Items) {
+    if ($item.Tag -eq $langPref) { $CmbSettingsLanguage.SelectedItem = $item; break }
+}
 
 # Log binding + initiele startup-entries direct in collection
 # (Write-Log werkt na deze regel ook gewoon voor alle latere events)
@@ -1382,8 +1409,8 @@ $GridLogs.ItemsSource = $LogCollection
 
 # Voeg startup-info direct toe aan de collection - garandeert zichtbaarheid
 foreach ($entry in @(
-    @{ Lvl='INFO'; Src='GUI';        Msg="WinGet Manager v$(Get-AppVersion) gestart" }
-    @{ Lvl='INFO'; Src='WinGetCore'; Msg="WinGet versie: $(Get-WinGetVersion)" }
+    @{ Lvl='INFO'; Src='GUI';        Msg="WinGet Manager v$(Get-AppVersion) started" }
+    @{ Lvl='INFO'; Src='WinGetCore'; Msg="WinGet version: $(Get-WinGetVersion)" }
     @{ Lvl='INFO'; Src='GUI';        Msg="Theme: $ActiveTheme | Admin: $(Test-IsAdmin)" }
 )) {
     $LogCollection.Add([PSCustomObject]@{
@@ -1394,7 +1421,7 @@ foreach ($entry in @(
     })
 }
 
-Write-Log "GUI geladen" -Source GUI
+Write-Log "GUI loaded" -Source GUI
 
 # ---------------------------------------------------------------------------
 # Zoekfunctionaliteit
@@ -1407,14 +1434,15 @@ function Invoke-LiveSearch {
     $query = $TxtSearch.Text.Trim()
     if (-not $query -or $query.Length -lt 2) {
         $GridSearch.ItemsSource = $null
-        Set-Status "Typ minimaal 2 tekens"
+        Set-Status (Get-Text 'Status.TypeMore')
         return
     }
 
-    $src = $CmbSearchSource.SelectedItem.Content
-    if ($src -eq 'Alle bronnen') { $src = $null }
+    # Source filter uses .Tag (language-neutral): '' = all, 'winget', 'msstore'
+    $src = if ($CmbSearchSource.SelectedItem) { $CmbSearchSource.SelectedItem.Tag } else { $null }
+    if (-not $src) { $src = $null }
 
-    Set-Status "Zoeken: $query..." $true
+    Set-Status (Get-Text 'Status.Searching' -FormatArgs @($query)) $true
 
     # Lokale runspace - via closure gebonden aan deze specifieke zoekopdracht
     $rs = [runspacefactory]::CreateRunspace()
@@ -1444,16 +1472,16 @@ function Invoke-LiveSearch {
                 $lines = $r.Output -split "`r?`n"
                 $results = @(Parse-PackageText $lines)
                 $GridSearch.ItemsSource = $results
-                Set-Status "$($results.Count) resultaten voor '$($r.Query)'"
+                Set-Status (Get-Text 'Status.SearchResults' -FormatArgs @($results.Count, $r.Query))
                 if ($results.Count -eq 0) {
-                    $EmptySearch.Text = "🔍  Geen resultaten voor '$($r.Query)'"
+                    $EmptySearch.Text = Get-Text 'Search.NoResults' -FormatArgs @($r.Query)
                     $EmptySearch.Visibility = 'Visible'
                 } else {
                     $EmptySearch.Visibility = 'Collapsed'
                 }
             }
         } catch {
-            Write-Log "Live search fout: $_" -Level WARN -Source GUI
+            Write-Log "Live search error: $_" -Level WARN -Source GUI
         } finally {
             try { $ps.Dispose() } catch {}
             try { $rs.Dispose() } catch {}
@@ -1466,7 +1494,7 @@ function Invoke-LiveSearch {
 $TxtSearch.Add_TextChanged({
     # Reset empty-state bij elke wijziging
     if ($TxtSearch.Text.Trim().Length -lt 2) {
-        $EmptySearch.Text = "🔍  Typ minimaal 2 tekens om te zoeken"
+        $EmptySearch.Text = Get-Text 'Search.Empty'
         $EmptySearch.Visibility = 'Visible'
         $GridSearch.ItemsSource = $null
     }
@@ -1474,7 +1502,7 @@ $TxtSearch.Add_TextChanged({
 
     if (-not $TxtSearch.Text.Trim()) {
         $GridSearch.ItemsSource = $null
-        Set-Status "Gereed"
+        Set-Status (Get-Text 'Status.Ready')
         return
     }
 
@@ -1512,7 +1540,7 @@ $BtnClearSearch.Add_Click({
     if ($Script:SearchDebounce) { $Script:SearchDebounce.Stop() }
     $TxtSearch.Text = ''
     $GridSearch.ItemsSource = $null
-    Set-Status "Gereed"
+    Set-Status (Get-Text 'Status.Ready')
 })
 
 $GridSearch.Add_SelectionChanged({
@@ -1523,22 +1551,22 @@ $GridSearch.Add_SelectionChanged({
 $BtnInstallSelected.Add_Click({
     $pkg = $GridSearch.SelectedItem
     if (-not $pkg) { return }
-    if (-not (Ask-Confirm "Installeer '$($pkg.Name)' ($($pkg.Id))?")) { return }
+    if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmInstall' -FormatArgs @($pkg.Name, $pkg.Id)))) { return }
 
     $name = $pkg.Name; $id = $pkg.Id
     $args = @('install','--id',$id,'--exact','--scope',$cfg.DefaultScope,
               '--silent','--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
 
-    Start-WinGetWork -WinGetArgs $args -BusyMessage "Installeren: $name..." -OnDone {
+    Start-WinGetWork -WinGetArgs $args -BusyMessage (Get-Text 'Busy.Installing' -FormatArgs @($name)) -OnDone {
         param($exit, $output)
         if ($exit -eq 0) {
-            Show-Info "'$name' succesvol geinstalleerd."
-            Set-Status "Installatie geslaagd"
+            Show-Info (Get-Text 'Dialog.InstallSuccess' -FormatArgs @($name))
+            Set-Status (Get-Text 'Status.InstallSuccess')
             Refresh-Installed
         } else {
             $info = Get-WinGetErrorInfo $exit
-            Show-Error "Installatie mislukt: $($info.Msg)"
-            Set-Status "Installatie mislukt"
+            Show-Error (Get-Text 'Dialog.InstallFailed' -FormatArgs @($info.Msg))
+            Set-Status (Get-Text 'Status.InstallFailed')
         }
     }.GetNewClosure()
 })
@@ -1546,14 +1574,14 @@ $BtnInstallSelected.Add_Click({
 $BtnShowDetails.Add_Click({
     $pkg = $GridSearch.SelectedItem
     if (-not $pkg) { return }
-    Set-Status "Details ophalen..." $true
+    Set-Status (Get-Text 'Status.FetchingDetails') $true
     try {
         $info = Get-WinGetPackageInfo -Id $pkg.Id
-        $msg  = "Naam:    $($info.Name)`nID:      $($info.Id)`nVersie:  $($info.Version)`nUitgever: $($info.Publisher)`nBron:    $($info.Source)"
+        $msg  = Get-Text 'Details.Format' -FormatArgs @($info.Name, $info.Id, $info.Version, $info.Publisher, $info.Source)
         [System.Windows.MessageBox]::Show($msg, "Package details", "OK", "Information") | Out-Null
-        Set-Status "Gereed"
+        Set-Status (Get-Text 'Status.Ready')
     } catch {
-        Set-Status "Fout bij details"
+        Set-Status (Get-Text 'Status.DetailsError')
     }
 })
 
@@ -1564,12 +1592,12 @@ $BtnShowDetails.Add_Click({
 $Script:AllInstalled = @()
 
 function Refresh-Installed {
-    Set-Status "Geïnstalleerde packages laden..." $true
+    Set-Status (Get-Text 'Status.LoadingInstalledPkgs') $true
     $GridInstalled.ItemsSource = $null
     try {
         $installed = Get-WinGetInstalled
         $updates   = @()
-        try { $updates = Get-WinGetUpdates } catch { Write-Log "Updates ophalen mislukt: $_" -Level WARN -Source GUI }
+        try { $updates = Get-WinGetUpdates } catch { Write-Log "Failed to fetch updates: $_" -Level WARN -Source GUI }
 
         # Index updates op Id voor snelle lookup
         $updateMap = @{}
@@ -1601,7 +1629,7 @@ function Refresh-Installed {
         Apply-InstalledFilter
         $count = $Script:AllInstalled.Count
         $upgradable = @($Script:AllInstalled | Where-Object { $_.HasUpdate }).Count
-        $TxtInstalledCount.Text = "$count packages, $upgradable updatebaar"
+        $TxtInstalledCount.Text = Get-Text 'Status.InstalledCount' -FormatArgs @($count, $upgradable)
         if ($count -gt 0) {
             $BadgeInstalledText.Text = "$count"
             $BadgeInstalled.Visibility = 'Visible'
@@ -1609,17 +1637,17 @@ function Refresh-Installed {
             $BadgeInstalled.Visibility = 'Collapsed'
         }
         if ($count -eq 0) {
-            $EmptyInstalled.Text = "📦  Geen packages gevonden"
+            $EmptyInstalled.Text = Get-Text 'Status.NoPackagesFound'
             $EmptyInstalled.Visibility = 'Visible'
         } else {
             $EmptyInstalled.Visibility = 'Collapsed'
         }
-        Write-Log "Geïnstalleerd geladen: $count ($upgradable met update)" -Source GUI
-        Set-Status "Gereed"
+        Write-Log "Installed loaded: $count ($upgradable with update)" -Source GUI
+        Set-Status (Get-Text 'Status.Ready')
     } catch {
-        Set-Status "Fout"
-        Show-Error "Laden mislukt: $_"
-        Write-Log "Laden geïnstalleerd mislukt: $_" -Level ERROR -Source GUI
+        Set-Status (Get-Text 'Status.Error')
+        Show-Error (Get-Text 'Dialog.LoadFailed' -FormatArgs @("$_"))
+        Write-Log "Loading installed failed: $_" -Level ERROR -Source GUI
     }
 }
 
@@ -1647,16 +1675,16 @@ $GridInstalled.Add_SelectionChanged({
     $BtnUpdateSelectedInstalled.IsEnabled = ($null -ne $hasUpgradeable)
 
     if ($count -gt 1) {
-        $BtnUninstallSelected.Content = "🗑 Verwijder ($count)"
+        $BtnUninstallSelected.Content = Get-Text 'Btn.UninstallWithCount' -FormatArgs @($count)
         $upgradeCount = @($items | Where-Object { $_.HasUpdate }).Count
         if ($upgradeCount -gt 0) {
             $BtnUpdateSelectedInstalled.Content = "⬆ Update geselecteerde ($upgradeCount)"
         } else {
-            $BtnUpdateSelectedInstalled.Content = "⬆ Update geselecteerde"
+            $BtnUpdateSelectedInstalled.Content = Get-Text 'Btn.UpdateSelectedInst'
         }
     } else {
-        $BtnUninstallSelected.Content = "🗑 Verwijderen"
-        $BtnUpdateSelectedInstalled.Content = "⬆ Update geselecteerde"
+        $BtnUninstallSelected.Content = Get-Text 'Btn.Uninstall'
+        $BtnUpdateSelectedInstalled.Content = Get-Text 'Btn.UpdateSelectedInst'
     }
 })
 
@@ -1667,15 +1695,15 @@ $BtnUninstallSelected.Add_Click({
     if ($selected.Count -eq 1) {
         $pkg = $selected[0]
         if ($cfg.ConfirmUninstall) {
-            if (-not (Ask-ConfirmEx -Message "Verwijder '$($pkg.Name)'?" `
-                                    -Title "Pakket verwijderen" `
+            if (-not (Ask-ConfirmEx -Message (Get-Text 'Dialog.ConfirmUninstallSingle' -FormatArgs @($pkg.Name)) `
+                                    -Title (Get-Text 'Title.UninstallPackage') `
                                     -ConfigKeyToDisable 'ConfirmUninstall')) { return }
         }
         Start-SingleUninstall -PackageId $pkg.Id -PackageName $pkg.Name
     } else {
         $names = ($selected | ForEach-Object { "  - $($_.Name)" }) -join "`n"
-        if (-not (Ask-ConfirmEx -Message "$($selected.Count) packages verwijderen?`n`n$names" `
-                                -Title "Bulk verwijderen" `
+        if (-not (Ask-ConfirmEx -Message (Get-Text 'Dialog.ConfirmBulkUninstall' -FormatArgs @($selected.Count, $names)) `
+                                -Title (Get-Text 'Title.BulkUninstall') `
                                 -ConfigKeyToDisable 'ConfirmUninstall')) { return }
         Start-BulkUninstall -Packages $selected
     }
@@ -1689,10 +1717,10 @@ function Start-SingleUninstall {
     $doUninstall = $null
     $doUninstall = {
         param([bool]$AfterKill = $false)
-        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Verwijderen: $PackageName..." -OnDone {
+        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage (Get-Text 'Busy.Uninstalling' -FormatArgs @($PackageName)) -OnDone {
             param($exit, $output)
             if ($exit -eq 0) {
-                Set-Status "Verwijderd"
+                Set-Status (Get-Text 'Status.Uninstalled')
                 Refresh-Installed
                 return
             }
@@ -1701,7 +1729,7 @@ function Start-SingleUninstall {
                 $procs = Find-RelatedProcesses -PackageId $PackageId -PackageName $PackageName
                 if ($procs.Count -gt 0) {
                     $procList = ($procs | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join "`n  - "
-                    if (Ask-Confirm "Verwijderen mislukt: $PackageName draait nog.`n`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
+                    if (Ask-Confirm (Get-Text 'Dialog.UninstallStillRunning' -FormatArgs @($PackageName, $procList))) {
                         $procs | ForEach-Object { try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {} }
                         Start-Sleep -Seconds 2
                         & $doUninstall -AfterKill $true
@@ -1709,8 +1737,8 @@ function Start-SingleUninstall {
                     }
                 }
             }
-            Show-Error "Verwijderen van $PackageName mislukt: $($info.Msg)"
-            Set-Status "Mislukt"
+            Show-Error (Get-Text 'Dialog.UninstallFailed' -FormatArgs @($PackageName, $info.Msg))
+            Set-Status (Get-Text 'Status.Failed')
         }.GetNewClosure()
     }.GetNewClosure()
 
@@ -1754,7 +1782,7 @@ function Start-BulkUninstall {
     $timer.Interval = [TimeSpan]::FromMilliseconds(400)
     $timer.Add_Tick({
         if ($progress.Current -gt 0 -and -not $progress.Done) {
-            $TxtStatus.Text = "Verwijderen ($($progress.Current)/$($progress.Total)): $($progress.CurrentName)"
+            $TxtStatus.Text = Get-Text 'Status.Uninstalling' -FormatArgs @($progress.Current, $progress.Total, $progress.CurrentName)
         }
         if ($progress.Done) {
             $timer.Stop()
@@ -1763,10 +1791,10 @@ function Start-BulkUninstall {
             $UpdateProgress.Visibility = 'Collapsed'
             $Window.IsEnabled = $true
             Refresh-Installed
-            $msg = "Klaar: $($progress.Ok) verwijderd, $($progress.Fail) mislukt"
+            $msg = Get-Text 'BulkResult.Uninstall' -FormatArgs @($progress.Ok, $progress.Fail)
             Set-Status $msg
             if ($progress.Fail -gt 0) {
-                Show-Info "$msg`n`nMislukt: $($progress.FailedNames -join ', ')"
+                Show-Info (Get-Text 'Dialog.SomeFailed' -FormatArgs @($msg, ($progress.FailedNames -join ', ')))
             }
         }
     }.GetNewClosure())
@@ -1776,24 +1804,24 @@ function Start-BulkUninstall {
 $BtnUpdateSelectedInstalled.Add_Click({
     $selected = @($GridInstalled.SelectedItems | Where-Object { $_.HasUpdate })
     if ($selected.Count -eq 0) {
-        Show-Info "Geen geselecteerde packages hebben een update beschikbaar."
+        Show-Info (Get-Text 'Dialog.NoUpdatesForSelection')
         return
     }
     if ($selected.Count -eq 1) {
         if ($cfg.ConfirmUpdate) {
             if (-not (Ask-ConfirmEx -Message "Update '$($selected[0].Name)' naar v$($selected[0].AvailableVersion)?" `
-                                    -Title "Pakket updaten" `
+                                    -Title (Get-Text 'Title.UpdatePackage') `
                                     -ConfigKeyToDisable 'ConfirmUpdate')) { return }
         }
         Start-SingleUpdate -PackageId $selected[0].Id -PackageName $selected[0].Name
     } else {
         $names = ($selected | ForEach-Object { "  - $($_.Name)" }) -join "`n"
         if ($cfg.ConfirmUpdate) {
-            if (-not (Ask-ConfirmEx -Message "$($selected.Count) packages updaten?`n`n$names" `
-                                    -Title "Bulk updaten" `
+            if (-not (Ask-ConfirmEx -Message (Get-Text 'Dialog.ConfirmUpdateMultiple' -FormatArgs @($selected.Count, $names)) `
+                                    -Title (Get-Text 'Title.BulkUpdate') `
                                     -ConfigKeyToDisable 'ConfirmUpdate')) { return }
         } else {
-            if (-not (Ask-Confirm "$($selected.Count) packages updaten?`n`n$names")) { return }
+            if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmUpdateMultiple' -FormatArgs @($selected.Count, $names)))) { return }
         }
         Start-BulkUpdate -Packages $selected
     }
@@ -1808,10 +1836,10 @@ function Start-SingleUpdate {
     $doUpdate = $null
     $doUpdate = {
         param([bool]$AfterKill = $false)
-        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage "Updaten: $PackageName..." -OnDone {
+        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage (Get-Text 'Busy.Updating' -FormatArgs @($PackageName)) -OnDone {
             param($exit, $output)
             if ($exit -eq 0) {
-                Set-Status "Update van $PackageName geslaagd"
+                Set-Status (Get-Text 'Status.UpdateSuccessName' -FormatArgs @($PackageName))
                 Refresh-Installed
                 return
             }
@@ -1820,8 +1848,8 @@ function Start-SingleUpdate {
                 $procs = Find-RelatedProcesses -PackageId $PackageId -PackageName $PackageName
                 if ($procs.Count -gt 0) {
                     $procList = ($procs | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join "`n  - "
-                    if (Ask-Confirm "Update mislukt: $PackageName draait nog.`n`n  - $procList`n`nProcessen sluiten en opnieuw proberen?") {
-                        Write-Log "Sluiten en retry: $($procs.Count) processen voor $PackageName" -Source GUI
+                    if (Ask-Confirm (Get-Text 'Dialog.UpdateStillRunning' -FormatArgs @($PackageName, $procList))) {
+                        Write-Log "Closing and retrying: $($procs.Count) processes for $PackageName" -Source GUI
                         $procs | ForEach-Object { try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {} }
                         Start-Sleep -Seconds 2
                         & $doUpdate -AfterKill $true
@@ -1829,12 +1857,12 @@ function Start-SingleUpdate {
                     }
                 }
             } elseif ($info.Action -eq 'elevate') {
-                Show-Error "$PackageName vereist administrator-rechten. Start WinGetManager als admin."
-                Set-Status "Update mislukt"
+                Show-Error (Get-Text 'Dialog.RequiresAdmin' -FormatArgs @($PackageName))
+                Set-Status (Get-Text 'Status.UpdateFailedShort')
                 return
             }
-            Show-Error "Update van $PackageName mislukt: $($info.Msg)"
-            Set-Status "Update mislukt"
+            Show-Error (Get-Text 'Dialog.UpdateFailedDetailed' -FormatArgs @($PackageName, $info.Msg))
+            Set-Status (Get-Text 'Status.UpdateFailedShort')
         }.GetNewClosure()
     }.GetNewClosure()
 
@@ -1848,7 +1876,7 @@ function Start-SingleUpdate {
 $Script:UpdateablePackages = @()
 
 function Refresh-Updates {
-    Set-Status "Updates controleren..." $true
+    Set-Status (Get-Text 'Status.CheckingUpdates') $true
     $TxtUpdateCount.Text = "..."
     $GridUpdates.ItemsSource = $null
     try {
@@ -1872,12 +1900,12 @@ function Refresh-Updates {
         } else {
             $EmptyUpdates.Visibility = 'Collapsed'
         }
-        Set-Status "$count update(s) gevonden"
+        Set-Status (Get-Text 'Status.UpdatesFound' -FormatArgs @($count))
         Write-Log "Updates: $count" -Source GUI
     } catch {
-        Set-Status "Fout bij controleren"
+        Set-Status (Get-Text 'Status.CheckError')
         $TxtUpdateCount.Text = "!"
-        Write-Log "Update-check fout: $_" -Level ERROR -Source GUI
+        Write-Log "Update check error: $_" -Level ERROR -Source GUI
     }
 }
 
@@ -1885,13 +1913,13 @@ $BtnRefreshUpdates.Add_Click({ Refresh-Updates })
 
 $BtnUpdateAll.Add_Click({
     $count = $Script:UpdateablePackages.Count
-    if ($count -eq 0) { Show-Info "Geen updates beschikbaar."; return }
+    if ($count -eq 0) { Show-Info (Get-Text 'Dialog.NoUpdatesAvailable'); return }
     if ($cfg.ConfirmUpdate) {
-        if (-not (Ask-ConfirmEx -Message "Alle $count packages updaten?" `
-                                -Title "Alles updaten" `
+        if (-not (Ask-ConfirmEx -Message (Get-Text 'Dialog.ConfirmUpdateAll' -FormatArgs @($count)) `
+                                -Title (Get-Text 'Title.UpdateAll') `
                                 -ConfigKeyToDisable 'ConfirmUpdate')) { return }
     } else {
-        if (-not (Ask-Confirm "Alle $count packages updaten?")) { return }
+        if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmUpdateAll' -FormatArgs @($count)))) { return }
     }
     Start-BulkUpdate -Packages $Script:UpdateablePackages
 })
@@ -1899,15 +1927,15 @@ $BtnUpdateAll.Add_Click({
 $BtnUpdateSelected.Add_Click({
     $selected = @($Script:UpdateablePackages | Where-Object { $_.Selected })
     if ($selected.Count -eq 0) {
-        Show-Info "Selecteer eerst packages via het selectievakje."
+        Show-Info (Get-Text 'Dialog.SelectFirst')
         return
     }
     if ($cfg.ConfirmUpdate) {
-        if (-not (Ask-ConfirmEx -Message "$($selected.Count) geselecteerde package(s) updaten?" `
-                                -Title "Selectie updaten" `
+        if (-not (Ask-ConfirmEx -Message (Get-Text 'Dialog.ConfirmUpdateSelected' -FormatArgs @($selected.Count)) `
+                                -Title (Get-Text 'Title.UpdateSelection') `
                                 -ConfigKeyToDisable 'ConfirmUpdate')) { return }
     } else {
-        if (-not (Ask-Confirm "$($selected.Count) geselecteerde package(s) updaten?")) { return }
+        if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmUpdateSelected' -FormatArgs @($selected.Count)))) { return }
     }
     Start-BulkUpdate -Packages $selected
 })
@@ -1921,7 +1949,7 @@ function Start-BulkUpdate {
 
     $UpdateProgress.Visibility = 'Visible'
     $Window.IsEnabled = $false
-    Set-Status "Voorbereiden..." $true
+    Set-Status (Get-Text 'Status.Preparing') $true
 
     # Synchronized hashtable: gedeeld tussen runspace en UI-thread
     $progress = [hashtable]::Synchronized(@{
@@ -1968,7 +1996,7 @@ function Start-BulkUpdate {
     $timer.Interval = [TimeSpan]::FromMilliseconds(400)
     $timer.Add_Tick({
         if ($progress.Current -gt 0 -and -not $progress.Done) {
-            $TxtStatus.Text = "Updaten ($($progress.Current)/$($progress.Total)): $($progress.CurrentName)"
+            $TxtStatus.Text = Get-Text 'Status.UpdatingProgress' -FormatArgs @($progress.Current, $progress.Total, $progress.CurrentName)
         }
         if ($progress.Done) {
             $timer.Stop()
@@ -1978,7 +2006,7 @@ function Start-BulkUpdate {
             $Window.IsEnabled = $true
             Refresh-Updates
             Refresh-Installed
-            $msg = "Klaar: $($progress.Ok) geslaagd, $($progress.Fail) mislukt"
+            $msg = Get-Text 'BulkResult.Update'    -FormatArgs @($progress.Ok, $progress.Fail)
             Set-Status $msg
             if ($progress.Fail -gt 0) {
                 $failed = $progress.FailedNames -join ", "
@@ -2009,30 +2037,30 @@ $BtnBrowseImport.Add_Click({
 
 $BtnExport.Add_Click({
     $path = $TxtExportPath.Text.Trim()
-    if (-not $path) { Show-Info "Geef een exportpad op."; return }
-    Set-Status "Exporteren..." $true
+    if (-not $path) { Show-Info (Get-Text 'Dialog.NoExportPath'); return }
+    Set-Status (Get-Text 'Status.Exporting') $true
     try {
         $ok = Export-WinGetPackages -OutputPath $path
-        if ($ok) { Show-Info "Export geslaagd naar:`n$path" } else { Show-Error "Export mislukt." }
-        Set-Status $(if($ok){"Export geslaagd"}else{"Export mislukt"})
+        if ($ok) { Show-Info (Get-Text 'Dialog.ExportSuccess' -FormatArgs @($path)) } else { Show-Error (Get-Text 'Dialog.ExportFailed') }
+        Set-Status $(if($ok){(Get-Text 'Status.ExportSuccess')}else{(Get-Text 'Status.ExportFailed')})
     } catch {
-        Show-Error "Fout: $_"
-        Set-Status "Fout"
+        Show-Error (Get-Text 'Dialog.GenericError' -FormatArgs @("$_"))
+        Set-Status (Get-Text 'Status.Error')
     }
 })
 
 $BtnImport.Add_Click({
     $path = $TxtImportPath.Text.Trim()
-    if (-not $path -or -not (Test-Path $path)) { Show-Info "Geldig importbestand selecteren."; return }
-    if (-not (Ask-Confirm "Alle packages uit '$path' installeren?")) { return }
-    Set-Status "Importeren..." $true
+    if (-not $path -or -not (Test-Path $path)) { Show-Info (Get-Text 'Dialog.SelectImportFile'); return }
+    if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmImport' -FormatArgs @($path)))) { return }
+    Set-Status (Get-Text 'Status.Importing') $true
     try {
         $ok = Import-WinGetPackages -InputPath $path -IgnoreUnavailable:$ChkIgnoreUnavailable.IsChecked
-        if ($ok) { Show-Info "Import geslaagd." } else { Show-Error "Import mislukt (sommige packages konden niet worden geïnstalleerd)." }
-        Set-Status $(if($ok){"Import geslaagd"}else{"Import klaar (met fouten)"})
+        if ($ok) { Show-Info (Get-Text 'Dialog.ImportSuccess') } else { Show-Error (Get-Text 'Dialog.ImportFailed') }
+        Set-Status $(if($ok){(Get-Text 'Status.ImportSuccess')}else{(Get-Text 'Status.ImportWithErrors')})
     } catch {
-        Show-Error "Fout: $_"
-        Set-Status "Fout"
+        Show-Error (Get-Text 'Dialog.GenericError' -FormatArgs @("$_"))
+        Set-Status (Get-Text 'Status.Error')
     }
 })
 
@@ -2057,9 +2085,9 @@ function Refresh-Sources {
         } else {
             $EmptySources.Visibility = 'Collapsed'
         }
-        Set-Status "Bronnen geladen"
+        Set-Status (Get-Text 'Status.SourcesLoaded')
     } catch {
-        Write-Log "Bronnen laden mislukt: $_" -Level ERROR -Source GUI
+        Write-Log "Loading sources failed: $_" -Level ERROR -Source GUI
     }
 }
 
@@ -2073,41 +2101,41 @@ $BtnAddSource.Add_Click({
     $name = $TxtSourceName.Text.Trim()
     $url  = $TxtSourceUrl.Text.Trim()
     $type = $CmbSourceType.SelectedItem.Content
-    if (-not $name -or -not $url) { Show-Info "Naam en URL zijn verplicht."; return }
-    Set-Status "Bron toevoegen..." $true
+    if (-not $name -or -not $url) { Show-Info (Get-Text 'Dialog.NameUrlRequired'); return }
+    Set-Status (Get-Text 'Status.AddingSource') $true
     try {
         $ok = Add-WinGetSource -Name $name -Url $url -Type $type
         if ($ok) {
             $TxtSourceName.Text = ''; $TxtSourceUrl.Text = ''
             Refresh-Sources
         } else {
-            Show-Error "Bron toevoegen mislukt (vereist administrator-rechten)."
+            Show-Error (Get-Text 'Dialog.AddSourceFailed')
         }
-        Set-Status $(if($ok){"Bron toegevoegd"}else{"Mislukt"})
+        Set-Status $(if($ok){(Get-Text 'Status.SourceAdded')}else{(Get-Text 'Status.Failed')})
     } catch {
-        Show-Error "Fout: $_"; Set-Status "Fout"
+        Show-Error (Get-Text 'Dialog.GenericError' -FormatArgs @("$_")); Set-Status (Get-Text 'Status.Error')
     }
 })
 
 $BtnRemoveSource.Add_Click({
     $src = $GridSources.SelectedItem
     if (-not $src) { return }
-    if (-not (Ask-Confirm "Bron '$($src.Name)' verwijderen?")) { return }
+    if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmRemoveSource' -FormatArgs @($src.Name)))) { return }
     try {
         $ok = Remove-WinGetSource -Name $src.Name
-        if ($ok) { Refresh-Sources } else { Show-Error "Verwijderen mislukt (administrator vereist)." }
+        if ($ok) { Refresh-Sources } else { Show-Error (Get-Text 'Dialog.RemoveSourceFailed') }
     } catch {
-        Show-Error "Fout: $_"
+        Show-Error (Get-Text 'Dialog.GenericError' -FormatArgs @("$_"))
     }
 })
 
 $BtnResetSources.Add_Click({
-    if (-not (Ask-Confirm "Alle bronnen resetten naar standaard (vereist administrator)?")) { return }
+    if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmResetSources'))) { return }
     try {
         $ok = Reset-WinGetSources
-        if ($ok) { Refresh-Sources; Show-Info "Bronnen gereset." } else { Show-Error "Reset mislukt." }
+        if ($ok) { Refresh-Sources; Show-Info (Get-Text 'Dialog.SourcesReset') } else { Show-Error (Get-Text 'Dialog.ResetFailed') }
     } catch {
-        Show-Error "Fout: $_"
+        Show-Error (Get-Text 'Dialog.GenericError' -FormatArgs @("$_"))
     }
 })
 
@@ -2116,8 +2144,9 @@ $BtnResetSources.Add_Click({
 # ---------------------------------------------------------------------------
 
 $CmbLogFilter.Add_SelectionChanged({
-    $filter = $CmbLogFilter.SelectedItem.Content
-    if ($filter -eq 'Alle') {
+    # Use .Tag (language-neutral): '' = all, 'DEBUG'/'INFO'/'WARN'/'ERROR' = filter
+    $filter = if ($CmbLogFilter.SelectedItem) { $CmbLogFilter.SelectedItem.Tag } else { '' }
+    if (-not $filter) {
         $GridLogs.ItemsSource = $LogCollection
     } else {
         $view = [System.Windows.Data.CollectionViewSource]::GetDefaultView($LogCollection)
@@ -2127,7 +2156,7 @@ $CmbLogFilter.Add_SelectionChanged({
 })
 
 $BtnClearLogs.Add_Click({
-    if (Ask-Confirm "Alle logregels verwijderen uit het scherm?") {
+    if (Ask-Confirm (Get-Text 'Dialog.ConfirmClearLogs')) {
         $LogCollection.Clear()
     }
 })
@@ -2137,7 +2166,7 @@ $BtnOpenLogFile.Add_Click({
     if ($logPath -and (Test-Path $logPath)) {
         Start-Process notepad.exe -ArgumentList $logPath
     } else {
-        Show-Info "Logbestand niet gevonden: $logPath"
+        Show-Info (Get-Text 'Dialog.LogFileNotFound' -FormatArgs @($logPath))
     }
 })
 
@@ -2164,13 +2193,29 @@ $BtnSaveSettings.Add_Click({
         Set-ConfigValue -Key 'ConfirmUninstall'       -Value $ChkConfirmUninstall.IsChecked
         Set-ConfigValue -Key 'ConfirmUpdate'          -Value $ChkConfirmUpdate.IsChecked
         Set-ConfigValue -Key 'SelfUpdateUrl'          -Value $TxtSettingsUpdateUrl.Text.Trim()
+
+        # Taal: opslaan op basis van .Tag (auto/nl-NL/en-US)
+        $oldLang = if ($cfg.Language) { $cfg.Language } else { 'auto' }
+        $newLang = if ($CmbSettingsLanguage.SelectedItem) { $CmbSettingsLanguage.SelectedItem.Tag } else { $oldLang }
+        Set-ConfigValue -Key 'Language' -Value $newLang
+
         $script:cfg = Get-AppConfig
 
         # Detecteer theme-wijziging en bied herstart aan
         $newActiveTheme = Resolve-ActiveTheme -Preference $newTheme
-        if ($newActiveTheme -ne $ActiveTheme) {
-            Write-Log "Thema gewijzigd: $ActiveTheme -> $newActiveTheme" -Source GUI
-            if (Ask-Confirm "Het thema is gewijzigd. App nu herstarten om de wijziging toe te passen?") {
+        $themeChanged = $newActiveTheme -ne $ActiveTheme
+        $langChanged  = $newLang -ne $oldLang
+
+        if ($themeChanged -or $langChanged) {
+            $reason = if ($langChanged -and $themeChanged) {
+                (Get-Text 'Restart.LanguageAndTheme')
+            } elseif ($langChanged) {
+                (Get-Text 'Restart.LanguageChanged')
+            } else {
+                (Get-Text 'Restart.ThemeChanged')
+            }
+            Write-Log "$reason  Restart offered." -Source GUI
+            if (Ask-Confirm (Get-Text 'Dialog.ConfirmRestart' -FormatArgs @($reason))) {
                 $exePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
                 Start-Process -FilePath $exePath
                 $Window.Close()
@@ -2178,19 +2223,19 @@ $BtnSaveSettings.Add_Click({
             }
         }
 
-        Show-Info "Instellingen opgeslagen."
-        Write-Log "Instellingen opgeslagen" -Source GUI
+        Show-Info (Get-Text 'Dialog.SettingsSaved')
+        Write-Log "Settings saved" -Source GUI
     } catch {
-        Show-Error "Opslaan mislukt: $_"
+        Show-Error (Get-Text 'Dialog.SaveFailed' -FormatArgs @("$_"))
     }
 })
 
 $BtnResetSettings.Add_Click({
-    if (Ask-Confirm "Standaardinstellingen herstellen?") {
+    if (Ask-Confirm (Get-Text 'Dialog.ConfirmResetSettings')) {
         $defaultJson = Join-Path $ScriptRoot 'config\settings.json'
         Initialize-Config -ConfigPath $defaultJson
         $script:cfg = Get-AppConfig
-        Show-Info "Standaardinstellingen hersteld. Herstart de app om alle wijzigingen toe te passen."
+        Show-Info (Get-Text 'Dialog.SettingsReset')
     }
 })
 
@@ -2202,67 +2247,66 @@ $BtnCheckUpdates.Add_Click({ Refresh-Updates; (Get-Control 'MainTabs').SelectedI
 
 $BtnSelfUpdate.Add_Click({
     if (-not $cfg.SelfUpdateUrl) {
-        Show-Info "Geen update-URL geconfigureerd. Stel 'SelfUpdateUrl' in onder Instellingen."
+        Show-Info (Get-Text 'Dialog.NoUpdateUrl')
         return
     }
 
-    Set-Status "Controleren op app-update..." $true
+    Set-Status (Get-Text 'Status.CheckingAppUpdate') $true
     try {
         $info = Get-LatestAppVersion -Url $cfg.SelfUpdateUrl
         if (-not $info) {
-            Show-Error "Kan geen versie-info ophalen. Controleer je internetverbinding."
-            Set-Status "Update-check mislukt"
+            Show-Error (Get-Text 'Dialog.VersionCheckFailed')
+            Set-Status (Get-Text 'Status.AppCheckFailed')
             return
         }
 
         $current = Get-AppVersion
         $latest  = $info.Version
         if ([version]$latest -le [version]$current) {
-            Show-Info "App is al up-to-date (v$current)."
-            Set-Status "Up-to-date"
+            Show-Info (Get-Text 'Dialog.AppUpToDate' -FormatArgs @($current))
+            Set-Status (Get-Text 'Status.UpToDateShort')
             return
         }
 
-        $msg = "Nieuwe versie beschikbaar: v$latest`n`nHuidige versie: v$current`n`n" +
-               "Wat is er nieuw:`n$(($info.Body -split "`n" | Select-Object -First 8) -join "`n")`n`n" +
-               "Nu downloaden en bijwerken? De app wordt automatisch herstart."
+        $whatsNew = ($info.Body -split "`n" | Select-Object -First 8) -join "`n"
+        $msg = Get-Text 'Dialog.SelfUpdatePrompt' -FormatArgs @($latest, $current, $whatsNew)
         if (-not (Ask-Confirm $msg)) {
-            Set-Status "Update geannuleerd"
+            Set-Status (Get-Text 'Status.UpdateCancelled')
             return
         }
 
-        Set-Status "Downloaden v$latest..." $true
+        Set-Status (Get-Text 'Status.DownloadingApp' -FormatArgs @($latest)) $true
         $result = Update-App -Url $cfg.SelfUpdateUrl -OnProgress {
             param($stage, $version)
             $Window.Dispatcher.Invoke([action]{
                 $TxtStatus.Text = switch ($stage) {
-                    'download'  { "Downloaden v$version..." }
-                    'launching' { "Update klaar, herstarten..." }
-                    default     { "Bezig: $stage" }
+                    'download'  { Get-Text 'Status.DownloadingApp' -FormatArgs @($version) }
+                    'launching' { Get-Text 'Status.UpdateReady' }
+                    default     { Get-Text 'Status.WorkingOn' -FormatArgs @($stage) }
                 }
             })
         }
 
         if ($result.Updated) {
-            Show-Info "Update geïnstalleerd! De app wordt nu opnieuw gestart met v$($result.Latest)."
+            Show-Info (Get-Text 'Dialog.AppUpdateInstalled' -FormatArgs @($result.Latest))
             $Window.Close()
         } else {
             $reasonMsg = switch ($result.Reason) {
-                'up_to_date'       { "App is al up-to-date." }
-                'no_asset'         { "Update niet gevonden in deze release." }
-                'download_failed'  { "Download mislukt - check internetverbinding." }
-                'corrupt_download' { "Download was beschadigd, probeer opnieuw." }
-                'invalid_exe'      { "Download is geen geldige executable - mogelijk corrupt of gemanipuleerd." }
-                'untrusted_url'    { "Update-URL is niet vertrouwd. Alleen github.com URLs worden toegestaan." }
-                'not_exe_runtime'  { "Self-update werkt alleen vanuit de .exe distributie." }
-                default            { "Onbekende reden: $($result.Reason)" }
+                'up_to_date'       { Get-Text 'Update.UpToDate' }
+                'no_asset'         { Get-Text 'Update.NoAsset' }
+                'download_failed'  { Get-Text 'Update.DownloadFailed' }
+                'corrupt_download' { Get-Text 'Update.CorruptDownload' }
+                'invalid_exe'      { Get-Text 'Update.InvalidExe' }
+                'untrusted_url'    { Get-Text 'Update.UntrustedUrl' }
+                'not_exe_runtime'  { Get-Text 'Update.NotExeRuntime' }
+                default            { Get-Text 'Update.UnknownReason' -FormatArgs @($result.Reason) }
             }
-            Show-Error "Update mislukt: $reasonMsg"
-            Set-Status "Update mislukt"
+            Show-Error (Get-Text 'Dialog.AppUpdateFailed' -FormatArgs @($reasonMsg))
+            Set-Status (Get-Text 'Status.UpdateFailedShort')
         }
     } catch {
-        Show-Error "Fout bij update: $_"
-        Set-Status "Fout"
+        Show-Error (Get-Text 'Dialog.AppUpdateError' -FormatArgs @("$_"))
+        Set-Status (Get-Text 'Status.Error')
     }
 })
 
@@ -2271,7 +2315,7 @@ $BtnSelfUpdate.Add_Click({
 # ---------------------------------------------------------------------------
 
 $Window.Add_Loaded({
-    Write-Log "Venster geladen, initialisatie starten" -Source GUI
+    Write-Log "Window loaded, starting initialization" -Source GUI
 
     $TxtWinGetVersionStatus.Text = "WinGet v$(Get-WinGetVersion)"
 
@@ -2312,8 +2356,8 @@ $Window.Add_Loaded({
                 try {
                     $result = $ps.EndInvoke($handle) | Select-Object -First 1
                     if ($result) {
-                        Write-Log "Update beschikbaar: v$result" -Source GUI
-                        $TxtStatus.Text = "v$result beschikbaar - klik 'App updaten' bovenin"
+                        Write-Log "Update available: v$result" -Source GUI
+                        $TxtStatus.Text = Get-Text 'Status.UpdateAvailableHint' -FormatArgs @($result)
                         $BtnSelfUpdate.Background = [System.Windows.Media.Brushes]::Orange
                     }
                 } catch {}
@@ -2359,7 +2403,7 @@ try {
         }
     }
 } catch {
-    Write-Log "Icoon laden mislukt: $_" -Level WARN -Source GUI
+    Write-Log "Loading icon failed: $_" -Level WARN -Source GUI
 }
 
 # ---------------------------------------------------------------------------
@@ -2426,7 +2470,7 @@ $keyHandler = {
             }
         }
     } catch {
-        Write-Log "Keyboard shortcut fout: $_" -Level WARN -Source GUI
+        Write-Log "Keyboard shortcut error: $_" -Level WARN -Source GUI
     }
 }
 
@@ -2438,9 +2482,9 @@ $Window.AddHandler(
     $true   # handledEventsToo
 )
 
-Write-Log "WinGet Manager GUI starten" -Source GUI
+Write-Log "Starting WinGet Manager GUI" -Source GUI
 $null = $Window.ShowDialog()
-Write-Log "GUI gesloten" -Source GUI
+Write-Log "GUI closed" -Source GUI
 
 # SIG # Begin signature block
 # MIIFggYJKoZIhvcNAQcCoIIFczCCBW8CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
