@@ -23,7 +23,7 @@ Lightweight GUI for Windows Package Manager (`winget`) with dark/light theme and
 
 ## 📸 Screenshot
 
-![WinGet Manager v0.3 — Installed tab in dark mode](assets/screenshots/v0.3-installed-dark.png)
+![WinGet Manager v0.3.1 — Installed tab in dark mode](assets/screenshots/v0.3.1-installed-dark.png)
 
 *Dark mode, Installed tab — package list with status pills, source column (winget / msstore / local), and multi-select bulk actions.*
 
