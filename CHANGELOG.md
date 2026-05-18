@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-18
+
+### Added
+- **Automatic UAC elevation flow** — when an update or uninstall returns "needs admin rights" (exit code `-1978334969`), the app now offers a confirm dialog "Retry now with admin rights? (Windows will show a UAC prompt.)" and on Yes triggers one UAC prompt. Works for single, bulk update, and bulk uninstall flows. Bulk operations batch all admin-required packages into ONE UAC prompt via `cmd /c "winget ... && winget ..."`.
+- **UAC prompt visibility helpers** — new Win32 P/Invoke wrapper (`WinGetMgr.UacHelper`) calls `AllowSetForegroundWindow` before triggering UAC and re-focuses the main window after completion, so the consent dialog appears on top instead of as a hidden taskbar flash.
+- **Sources tab: `local` explainer** — the info panel at the top of the Sources tab now shows a third bullet describing what `local` means (apps installed outside WinGet — `.exe` installers, MSI — that can't be updated through this GUI).
+- **Row-selected fallback for "Update selection"** — on the Updates tab, the green "Update selection" button now uses the highlighted row when no checkboxes are ticked. Convenient for the common case of a single available update.
+- **Settings tab icon** — replaced the thin monochrome `⚙` symbol with the proper Windows Settings glyph from Segoe Fluent Icons (`U+E713`, falls back to Segoe MDL2 Assets on Windows 10).
+
+### Changed
+- **"Up-to-date" status only when verifiable** — packages with `local` (ARP) or empty source no longer claim to be "Up-to-date" since WinGet can't actually check their upstream. They now show `— Unknown` / `— Onbekend`. Packages from `winget`/`msstore` show "Up-to-date" as before.
+
+### Fixed
+- **Truncated package IDs in Updates and Installed tabs** — long IDs like `Microsoft.VCRedist.2015+.x86` were being cut off (last chars bled into the next column, e.g. shown as `.x8` with `6` appearing in the CURRENT column). Root cause: PS2EXE `-NoConsole` builds have no parent console, so winget falls back to a narrow default width. Fix: invoke winget through `cmd /c "MODE CON: COLS=250 LINES=3000 & winget ..."` in a hidden console, giving winget a 250-column buffer. IDs now come through intact and packages like VC++ Redistributable can actually be updated.
+- **Bulk update failure dialog mixed Dutch into English UI** — `Show-Info "$msg\n\nMislukt: $failed"` was still hardcoded. Now uses `Get-Text 'Dialog.SomeFailed'` so it correctly says "Failed:" in EN and "Mislukt:" in NL.
+- **`{0} update(s) found` displayed literally** when there were zero updates. Root cause: PowerShell unwraps `@(0)` to scalar `0` in boolean context, so `if ($FormatArgs -and ...)` evaluated to `$false`. Fix: explicit `$null -ne $FormatArgs` check in `Get-Text`.
+- **WinGet `source list` noisy WARN** — `source list` does not support `--output json`, but we were passing that flag and logging the resulting error code. Now uses text parsing via new `Parse-SourceText` helper.
+- **`ᵃ` legend-markers in parsed package IDs** — when winget output is squeezed in narrow consoles it prefixes IDs with superscript letters as legend markers. `Parse-PackageText` now strips leading non-alphanumeric chars from the parsed Id field as a defensive fallback.
+- **Dialog titles via i18n** — `Show-Info`/`Show-Error`/`Ask-Confirm`/`Ask-ConfirmEx` and the Package-details box had hardcoded Dutch titles (`Fout`, `Bevestig`, `Bevestigen`, `Package details`). Now route through new keys `Dialog.Title.Info` / `.Error` / `.Confirm` / `.Details`.
+- **Hardcoded Dutch text in "Niet meer vragen" checkbox** — the `Ask-ConfirmEx` dialog showed Dutch text regardless of language. Now uses `Dialog.DontAskAgain` placeholder.
+- **`$args` shadowing PowerShell automatic variable** — six call sites in `WinGet-Core.psm1` and `MainWindow.ps1` used `$args` as a user variable for winget argument arrays. PowerShell resets `$args` automatically inside scriptblocks, which could silently truncate arguments on entry to an inner block. All renamed to `$cmdArgs`.
+- **Hardcoded Dutch fallback `"Bezig..."`** — `Start-WinGetWork` default `BusyMessage` was a Dutch literal. Now uses `Get-Text 'Status.WorkingOn'`.
+
+---
+
 ## [0.3.0] - 2026-05-17
 
 ### Added
@@ -177,7 +202,8 @@ First public release.
 - Smart App Control (Windows 11) blocks running the exe — disabling is a one-way action. Will be resolved once the app is distributed via Microsoft Store.
 - SmartScreen shows an "Unknown publisher" warning on first launch (click *More info* → *Run anyway*). Will be resolved later via SignPath or Microsoft Store distribution.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGet-Manager/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGet-Manager/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.3.1
 [0.3.0]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.3.0
 [0.2.5]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.2.5
 [0.2.4]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.2.4

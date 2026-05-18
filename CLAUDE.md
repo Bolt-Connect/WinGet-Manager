@@ -151,6 +151,12 @@ Only works in the EXE distribution. Steps:
 - WPF StackPanel has NO `Spacing` property (that's WinUI). Use `Margin` on the children.
 - `Foreground="#CDD6F4"` directly as an attribute does not work for theme substitution if the hex is missing from the mapping. Always use colors from the palette.
 - Files containing emojis or non-ASCII need a UTF-8 BOM, otherwise PS5.1 reads them as cp1252 and the module fails to parse.
+- **PS2EXE `-NoConsole` + winget = truncated output**: winget formats tabular output based on console buffer width via `GetConsoleScreenBufferInfo`. With no console it falls back to a narrow default and truncates long IDs (`Microsoft.VCRedist.2015+.x86` becomes `Microsoft.VCRedist.2015+.x8`, last char bleeds into the next column). Fix: wrap winget in `cmd /c "MODE CON: COLS=250 LINES=3000 & winget ..."` to give it a wide hidden console. See `Invoke-WinGet` in `WinGet-Core.psm1`.
+- **`@(0)` is falsy in PowerShell boolean context**: a single-element array unwraps to its scalar, and `0` is `$false`. So `if ($FormatArgs -and $FormatArgs.Count -gt 0)` short-circuits to `$false` when `$FormatArgs = @(0)`. Always use `if ($null -ne $FormatArgs -and $FormatArgs.Count -gt 0)`.
+- **WPF emoji rendering**: `⚙️` (U+2699 + VS16) does NOT render as a colored emoji — WPF strips the variation selector. For a clean Settings-style gear, use Segoe Fluent Icons glyph `&#xE713;` with `FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"` in a `<Run>` inside the TabItem header. Other tabs use full emoji codepoints (`🔍 📦 📂 🔗 📋`) which do render colored.
+- **UAC consent dialog often appears as a hidden taskbar flash** instead of on top. Fix: call Win32 `AllowSetForegroundWindow(ASFW_ANY)` and `SetForegroundWindow` on the main window IMMEDIATELY before `Start-Process -Verb RunAs`, then `$Window.Activate()` after the elevated child completes. See `Prepare-UacForeground` / `Restore-AppForeground` in `MainWindow.ps1`.
+- **`local` is not a real winget source** — it's our derived label for ARP-tracked apps (installed outside winget). WinGet cannot update or even check version for these, so the Installed-tab status pill must show `— Unknown` rather than misleading "Up-to-date".
+- **`winget source list` does not support `--output json`** — calling it with `-UseJson` returns exit code `-1978335230`. Use text parsing via `Parse-SourceText`. Other commands like `winget upgrade --output json` are also unsupported on older winget versions (1.x).
 
 ## Roadmap (see also README)
 

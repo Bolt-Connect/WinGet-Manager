@@ -736,6 +736,11 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                                 <Run Text="msstore" FontWeight="SemiBold" Foreground="#89B4FA"/>
                                 <Run Text="{{Sources.MsstoreDesc}}"/>
                             </TextBlock>
+                            <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap">
+                                <Run Text="• "/>
+                                <Run Text="local" FontWeight="SemiBold" Foreground="#FAB387"/>
+                                <Run Text="{{Sources.LocalDesc}}"/>
+                            </TextBlock>
                             <TextBlock FontSize="12" Foreground="#6C7086" TextWrapping="Wrap" Margin="0,8,0,0">
                                 <Run Text="{{Sources.Outro}}"/>
                             </TextBlock>
@@ -849,8 +854,14 @@ $ActiveTheme = Resolve-ActiveTheme -Preference $cfg.Theme
                 </Grid>
             </TabItem>
 
-            <!-- ─ Tab 7: Instellingen ─ -->
-            <TabItem Header="{{Tab.Settings}}">
+            <!-- ─ Tab 7: Settings (gear glyph from Segoe Fluent Icons / Segoe MDL2 Assets fallback) ─ -->
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock>
+                        <Run FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Text="&#xE713;"/>
+                        <Run Text="  {{Tab.Settings}}"/>
+                    </TextBlock>
+                </TabItem.Header>
                 <ScrollViewer Margin="20" VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="600" HorizontalAlignment="Left">
 
@@ -1152,17 +1163,70 @@ function Set-UIEnabled {
     })
 }
 
-function Show-Info  { param($msg) [System.Windows.MessageBox]::Show($msg, "Info",    "OK", "Information") | Out-Null }
-function Show-Error { param($msg) [System.Windows.MessageBox]::Show($msg, "Fout",    "OK", "Error")       | Out-Null }
-function Ask-Confirm { param($msg) ([System.Windows.MessageBox]::Show($msg, "Bevestig", "YesNo", "Question")) -eq 'Yes' }
+function Show-Info  { param($msg) [System.Windows.MessageBox]::Show($msg, (Get-Text 'Dialog.Title.Info'),    "OK",    "Information") | Out-Null }
+function Show-Error { param($msg) [System.Windows.MessageBox]::Show($msg, (Get-Text 'Dialog.Title.Error'),   "OK",    "Error")       | Out-Null }
+function Ask-Confirm { param($msg) ([System.Windows.MessageBox]::Show($msg, (Get-Text 'Dialog.Title.Confirm'), "YesNo", "Question")) -eq 'Yes' }
+
+# ---------------------------------------------------------------------------
+# UAC visibility helpers
+# ---------------------------------------------------------------------------
+# When Start-Process -Verb RunAs triggers UAC, Windows decides whether to
+# show the consent dialog on the secure desktop (on top) or as a flashing
+# taskbar button. The deciding factor is whether the calling process is the
+# foreground window AND has "permission" to grant foreground rights.
+#
+# Win32 magic:
+#   - AllowSetForegroundWindow(ASFW_ANY) lets ANY process steal foreground next
+#   - SetForegroundWindow on our window first ensures we ARE the foreground
+#   - After UAC completes, call $Window.Activate() to refocus our app
+
+if (-not ('WinGetMgr.UacHelper' -as [type])) {
+    Add-Type -Namespace WinGetMgr -Name UacHelper -MemberDefinition @'
+[DllImport("user32.dll", SetLastError = true)]
+public static extern bool AllowSetForegroundWindow(uint dwProcessId);
+[DllImport("user32.dll", SetLastError = true)]
+public static extern bool SetForegroundWindow(IntPtr hWnd);
+[DllImport("user32.dll", SetLastError = true)]
+public static extern bool FlashWindow(IntPtr hWnd, bool bInvert);
+public const uint ASFW_ANY = 0xFFFFFFFF;
+'@
+}
+
+# Call right before Start-Process -Verb RunAs to maximize chance of UAC showing on top
+function Prepare-UacForeground {
+    try {
+        $hwnd = (New-Object System.Windows.Interop.WindowInteropHelper($Window)).Handle
+        if ($hwnd -ne [IntPtr]::Zero) {
+            $Window.Activate() | Out-Null
+            [void][WinGetMgr.UacHelper]::SetForegroundWindow($hwnd)
+        }
+        [void][WinGetMgr.UacHelper]::AllowSetForegroundWindow([WinGetMgr.UacHelper]::ASFW_ANY)
+    } catch {
+        Write-Log "Prepare-UacForeground failed: $_" -Level WARN -Source GUI
+    }
+}
+
+# Call after Start-Process -Verb RunAs completes so our window gets focus back
+function Restore-AppForeground {
+    try {
+        $hwnd = (New-Object System.Windows.Interop.WindowInteropHelper($Window)).Handle
+        if ($hwnd -ne [IntPtr]::Zero) {
+            $Window.Activate() | Out-Null
+            [void][WinGetMgr.UacHelper]::SetForegroundWindow($hwnd)
+            # Flash taskbar briefly to draw attention if window is minimized
+            [void][WinGetMgr.UacHelper]::FlashWindow($hwnd, $true)
+        }
+    } catch {}
+}
 
 # Confirmation met optionele "Niet meer vragen"-checkbox die naar config schrijft
 function Ask-ConfirmEx {
     param(
         [string]$Message,
-        [string]$Title = 'Bevestigen',
+        [string]$Title,
         [string]$ConfigKeyToDisable
     )
+    if (-not $Title) { $Title = Get-Text 'Dialog.Title.Confirm' }
 
     # Snelpad: gebruiker heeft eerder "niet meer vragen" aangevinkt
     if ($ConfigKeyToDisable -and $cfg.$ConfigKeyToDisable -eq $false) {
@@ -1185,7 +1249,7 @@ function Ask-ConfirmEx {
         <TextBlock x:Name="TxtMsg" Grid.Row="0" Foreground="#CDD6F4"
                    FontSize="13" TextWrapping="Wrap" VerticalAlignment="Top"/>
         <CheckBox x:Name="ChkSkip" Grid.Row="1" Foreground="#6C7086" FontSize="12"
-                  Content="Niet meer vragen voor deze actie" Margin="0,16,0,0"/>
+                  Content="{{Dialog.DontAskAgain}}" Margin="0,16,0,0"/>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button x:Name="BtnYes" Content="{{Btn.Yes}}" Width="90" Height="32" Margin="0,0,8,0"
                     Background="#89B4FA" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand"/>
@@ -1285,10 +1349,12 @@ function Find-RelatedProcesses {
 function Start-WinGetWork {
     param(
         [Parameter(Mandatory)][string[]]$WinGetArgs,
-        [string]$BusyMessage = "Bezig...",
-        [Parameter(Mandatory)][scriptblock]$OnDone   # ($exitCode, $output) op UI-thread
+        [string]$BusyMessage,
+        [Parameter(Mandatory)][scriptblock]$OnDone,  # ($exitCode, $output) on UI-thread
+        [switch]$Elevated                            # If set, run winget elevated via UAC
     )
 
+    if (-not $BusyMessage) { $BusyMessage = Get-Text 'Status.WorkingOn' -FormatArgs @($WinGetArgs[0]) }
     Set-Status $BusyMessage $true
     $Window.IsEnabled = $false
 
@@ -1298,10 +1364,28 @@ function Start-WinGetWork {
     $ps = [powershell]::Create()
     $ps.Runspace = $rs
     [void]$ps.AddScript({
-        param($a)
-        $output = & winget @a 2>&1 | Out-String
-        return [PSCustomObject]@{ ExitCode = $LASTEXITCODE; Output = $output }
-    }).AddArgument($WinGetArgs)
+        param($a, $elev)
+        if ($elev) {
+            # Start elevated via UAC prompt; -Wait blocks until winget finishes.
+            # Output is not captured for elevated runs (child process has its own
+            # console). We only need the exit code.
+            $joined = $a -join ' '
+            try {
+                $p = Start-Process -FilePath 'winget' -ArgumentList $joined `
+                      -Verb RunAs -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+                return [PSCustomObject]@{ ExitCode = $p.ExitCode; Output = '' }
+            } catch {
+                # User cancelled UAC, or elevation otherwise failed
+                # 1223 = ERROR_CANCELLED (user declined UAC)
+                return [PSCustomObject]@{ ExitCode = 1223; Output = "$_" }
+            }
+        } else {
+            $output = & winget @a 2>&1 | Out-String
+            return [PSCustomObject]@{ ExitCode = $LASTEXITCODE; Output = $output }
+        }
+    }).AddArgument($WinGetArgs).AddArgument([bool]$Elevated)
+    # Ensure UAC consent dialog shows on top instead of as a flashing taskbar button
+    if ($Elevated) { Prepare-UacForeground }
     $handle = $ps.BeginInvoke()
 
     $timer = New-Object System.Windows.Threading.DispatcherTimer
@@ -1320,6 +1404,8 @@ function Start-WinGetWork {
                 $ps.Dispose(); $rs.Dispose()
             }
             $Window.IsEnabled = $true
+            # Refocus our window after elevated child finishes (UAC tends to steal focus)
+            if ($Elevated) { Restore-AppForeground }
             try { & $OnDone $exit $output } catch { Write-Log "OnDone error: $_" -Level ERROR -Source GUI }
         }
     }.GetNewClosure()
@@ -1554,10 +1640,12 @@ $BtnInstallSelected.Add_Click({
     if (-not (Ask-Confirm (Get-Text 'Dialog.ConfirmInstall' -FormatArgs @($pkg.Name, $pkg.Id)))) { return }
 
     $name = $pkg.Name; $id = $pkg.Id
-    $args = @('install','--id',$id,'--exact','--scope',$cfg.DefaultScope,
-              '--silent','--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
+    # Note: do NOT use `$args` here — it's a PowerShell automatic variable
+    # (sender/event-args in scriptblocks) that PS resets to @() on every block entry.
+    $cmdArgs = @('install','--id',$id,'--exact','--scope',$cfg.DefaultScope,
+                 '--silent','--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
 
-    Start-WinGetWork -WinGetArgs $args -BusyMessage (Get-Text 'Busy.Installing' -FormatArgs @($name)) -OnDone {
+    Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage (Get-Text 'Busy.Installing' -FormatArgs @($name)) -OnDone {
         param($exit, $output)
         if ($exit -eq 0) {
             Show-Info (Get-Text 'Dialog.InstallSuccess' -FormatArgs @($name))
@@ -1578,7 +1666,7 @@ $BtnShowDetails.Add_Click({
     try {
         $info = Get-WinGetPackageInfo -Id $pkg.Id
         $msg  = Get-Text 'Details.Format' -FormatArgs @($info.Name, $info.Id, $info.Version, $info.Publisher, $info.Source)
-        [System.Windows.MessageBox]::Show($msg, "Package details", "OK", "Information") | Out-Null
+        [System.Windows.MessageBox]::Show($msg, (Get-Text 'Dialog.Title.Details'), "OK", "Information") | Out-Null
         Set-Status (Get-Text 'Status.Ready')
     } catch {
         Set-Status (Get-Text 'Status.DetailsError')
@@ -1605,13 +1693,27 @@ function Refresh-Installed {
             if ($u.Id) { $updateMap[$u.Id] = $u }
         }
 
-        # Verrijk installed met AvailableVersion + HasUpdate vlag + status-tekst
+        # Enrich installed packages with AvailableVersion, HasUpdate flag, and status text.
+        # Status logic:
+        #   - HasUpdate         → "↑ Update"
+        #   - Source winget/msstore (verifiable, no update found) → "Up-to-date"
+        #   - Source local/'' (ARP — not checkable through winget)  → "Unknown"
+        # We can't honestly claim "Up-to-date" for local/ARP packages because winget
+        # never queries their upstream — they may well have updates available outside
+        # winget's view.
         $merged = foreach ($pkg in $installed) {
             $avail = ''
             $hasUpdate = $false
             if ($pkg.Id -and $updateMap.ContainsKey($pkg.Id)) {
                 $avail = $updateMap[$pkg.Id].AvailableVersion
                 if ($avail -and $avail -ne $pkg.Version) { $hasUpdate = $true }
+            }
+            $statusText = if ($hasUpdate) {
+                Get-Text 'Status.UpdateAvailable'
+            } elseif ($pkg.Source -in @('winget','msstore')) {
+                Get-Text 'Status.UpToDate'
+            } else {
+                Get-Text 'Status.Unknown'
             }
             [PSCustomObject]@{
                 Name             = $pkg.Name
@@ -1620,7 +1722,7 @@ function Refresh-Installed {
                 AvailableVersion = $avail
                 Source           = $pkg.Source
                 HasUpdate        = $hasUpdate
-                StatusText       = if ($hasUpdate) { "↑ Update" } else { "Up-to-date" }
+                StatusText       = $statusText
             }
         }
 
@@ -1754,6 +1856,7 @@ function Start-BulkUninstall {
     $progress = [hashtable]::Synchronized(@{
         Current = 0; Total = $Packages.Count; CurrentName = ''; Done = $false
         Ok = 0; Fail = 0; FailedNames = @()
+        NeedsAdmin = @()
     })
 
     $pkgInfo = @($Packages | ForEach-Object { [PSCustomObject]@{ Id = $_.Id; Name = $_.Name } })
@@ -1771,8 +1874,14 @@ function Start-BulkUninstall {
             $progress.CurrentName = $pkg.Name
             $a = @('uninstall','--id',$pkg.Id,'--exact','--silent','--disable-interactivity')
             $null = & winget @a 2>&1
-            if ($LASTEXITCODE -eq 0) { $progress.Ok++ }
-            else { $progress.Fail++; $progress.FailedNames += $pkg.Name }
+            $ec = $LASTEXITCODE
+            if ($ec -eq 0) { $progress.Ok++ }
+            else {
+                $progress.Fail++; $progress.FailedNames += $pkg.Name
+                if ($ec -eq -1978334969) {
+                    $progress.NeedsAdmin += [PSCustomObject]@{ Id = $pkg.Id; Name = $pkg.Name }
+                }
+            }
         }
         $progress.Done = $true
     })
@@ -1793,6 +1902,26 @@ function Start-BulkUninstall {
             Refresh-Installed
             $msg = Get-Text 'BulkResult.Uninstall' -FormatArgs @($progress.Ok, $progress.Fail)
             Set-Status $msg
+
+            if ($progress.NeedsAdmin.Count -gt 0) {
+                $names = ($progress.NeedsAdmin | ForEach-Object { $_.Name }) -join "`n  - "
+                if (Ask-Confirm (Get-Text 'Dialog.BulkNeedsAdmin' -FormatArgs @($progress.NeedsAdmin.Count, $names))) {
+                    Set-Status (Get-Text 'Status.RetryingElevated') $true
+                    $Window.IsEnabled = $false
+                    Start-ElevatedWinGetBatch -PackageIds ($progress.NeedsAdmin | ForEach-Object { $_.Id }) -Operation 'uninstall' -OnDone {
+                        param($okCount, $failCount, $cancelled)
+                        $Window.IsEnabled = $true
+                        Refresh-Installed
+                        if ($cancelled) {
+                            Set-Status (Get-Text 'Status.UpdateCancelled')
+                        } else {
+                            Set-Status (Get-Text 'BulkResult.Uninstall' -FormatArgs @($okCount, $failCount))
+                        }
+                    }
+                    return
+                }
+            }
+
             if ($progress.Fail -gt 0) {
                 Show-Info (Get-Text 'Dialog.SomeFailed' -FormatArgs @($msg, ($progress.FailedNames -join ', ')))
             }
@@ -1809,7 +1938,7 @@ $BtnUpdateSelectedInstalled.Add_Click({
     }
     if ($selected.Count -eq 1) {
         if ($cfg.ConfirmUpdate) {
-            if (-not (Ask-ConfirmEx -Message "Update '$($selected[0].Name)' naar v$($selected[0].AvailableVersion)?" `
+            if (-not (Ask-ConfirmEx -Message (Get-Text 'Dialog.ConfirmUpdateSinglePkg' -FormatArgs @($selected[0].Name, $selected[0].AvailableVersion)) `
                                     -Title (Get-Text 'Title.UpdatePackage') `
                                     -ConfigKeyToDisable 'ConfirmUpdate')) { return }
         }
@@ -1835,12 +1964,22 @@ function Start-SingleUpdate {
 
     $doUpdate = $null
     $doUpdate = {
-        param([bool]$AfterKill = $false)
-        Start-WinGetWork -WinGetArgs $cmdArgs -BusyMessage (Get-Text 'Busy.Updating' -FormatArgs @($PackageName)) -OnDone {
+        param([bool]$AfterKill = $false, [bool]$Elevated = $false)
+        $workArgs = @{
+            WinGetArgs  = $cmdArgs
+            BusyMessage = (Get-Text 'Busy.Updating' -FormatArgs @($PackageName))
+        }
+        if ($Elevated) { $workArgs.Elevated = $true }
+        Start-WinGetWork @workArgs -OnDone {
             param($exit, $output)
             if ($exit -eq 0) {
                 Set-Status (Get-Text 'Status.UpdateSuccessName' -FormatArgs @($PackageName))
                 Refresh-Installed
+                return
+            }
+            # User cancelled UAC prompt
+            if ($Elevated -and $exit -eq 1223) {
+                Set-Status (Get-Text 'Status.UpdateCancelled')
                 return
             }
             $info = Get-WinGetErrorInfo $exit
@@ -1852,13 +1991,18 @@ function Start-SingleUpdate {
                         Write-Log "Closing and retrying: $($procs.Count) processes for $PackageName" -Source GUI
                         $procs | ForEach-Object { try { Stop-Process -Id $_.Id -Force -ErrorAction Stop } catch {} }
                         Start-Sleep -Seconds 2
-                        & $doUpdate -AfterKill $true
+                        & $doUpdate -AfterKill $true -Elevated $Elevated
                         return
                     }
                 }
-            } elseif ($info.Action -eq 'elevate') {
-                Show-Error (Get-Text 'Dialog.RequiresAdmin' -FormatArgs @($PackageName))
-                Set-Status (Get-Text 'Status.UpdateFailedShort')
+            } elseif ($info.Action -eq 'elevate' -and -not $Elevated) {
+                # Auto-offer elevation via UAC. User confirms → retry with -Verb RunAs.
+                if (Ask-Confirm (Get-Text 'Dialog.RequiresAdmin' -FormatArgs @($PackageName))) {
+                    Write-Log "Retrying update with elevation for $PackageName" -Source GUI
+                    & $doUpdate -AfterKill $AfterKill -Elevated $true
+                    return
+                }
+                Set-Status (Get-Text 'Status.UpdateCancelled')
                 return
             }
             Show-Error (Get-Text 'Dialog.UpdateFailedDetailed' -FormatArgs @($PackageName, $info.Msg))
@@ -1926,6 +2070,11 @@ $BtnUpdateAll.Add_Click({
 
 $BtnUpdateSelected.Add_Click({
     $selected = @($Script:UpdateablePackages | Where-Object { $_.Selected })
+    # Fallback: if no checkboxes ticked but a row is row-selected (highlighted
+    # blue), use that row. Convenient for the common case of 1 update.
+    if ($selected.Count -eq 0 -and $GridUpdates.SelectedItem) {
+        $selected = @($GridUpdates.SelectedItem)
+    }
     if ($selected.Count -eq 0) {
         Show-Info (Get-Text 'Dialog.SelectFirst')
         return
@@ -1942,16 +2091,21 @@ $BtnUpdateSelected.Add_Click({
 
 # Gemeenschappelijke helper: update meerdere packages met live progress
 function Start-BulkUpdate {
-    param([array]$Packages)
+    param(
+        [array]$Packages,
+        [switch]$Elevated   # internal: set when re-entering with admin rights
+    )
 
     $total = $Packages.Count
     if ($total -eq 0) { return }
 
     $UpdateProgress.Visibility = 'Visible'
     $Window.IsEnabled = $false
-    Set-Status (Get-Text 'Status.Preparing') $true
+    Set-Status (Get-Text $(if ($Elevated) { 'Status.RetryingElevated' } else { 'Status.Preparing' })) $true
 
-    # Synchronized hashtable: gedeeld tussen runspace en UI-thread
+    # Synchronized hashtable: shared between runspace and UI-thread.
+    # NeedsAdmin tracks packages that returned the "elevation required" exit code
+    # so we can offer a single batched UAC retry at the end.
     $progress = [hashtable]::Synchronized(@{
         Current     = 0
         Total       = $total
@@ -1960,9 +2114,9 @@ function Start-BulkUpdate {
         Ok          = 0
         Fail        = 0
         FailedNames = @()
+        NeedsAdmin  = @()    # array of [PSCustomObject]@{Id, Name} that failed with -1978334969
     })
 
-    # Vereenvoudigde package-info voor de runspace
     $pkgInfo = @($Packages | ForEach-Object {
         [PSCustomObject]@{ Id = $_.Id; Name = $_.Name }
     })
@@ -1971,6 +2125,7 @@ function Start-BulkUpdate {
     $rs.Open()
     $rs.SessionStateProxy.SetVariable('progress', $progress)
     $rs.SessionStateProxy.SetVariable('packages', $pkgInfo)
+    $rs.SessionStateProxy.SetVariable('useElevated', [bool]$Elevated)
 
     $ps = [powershell]::Create()
     $ps.Runspace = $rs
@@ -1980,12 +2135,25 @@ function Start-BulkUpdate {
             $progress.CurrentName = $pkg.Name
             $a = @('upgrade','--id',$pkg.Id,'--exact','--silent',
                    '--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
-            $null = & winget @a 2>&1
-            if ($LASTEXITCODE -eq 0) {
+            if ($useElevated) {
+                # Single UAC prompt has already been accepted at the start of this
+                # elevated batch (the runspace itself is unelevated, but we spawn
+                # winget elevated per package). To get ONE prompt total, we instead
+                # spawn one elevated cmd that loops through all packages.
+                # But that's done by the caller — at runspace level we just call winget normally.
+                $null = & winget @a 2>&1
+            } else {
+                $null = & winget @a 2>&1
+            }
+            $ec = $LASTEXITCODE
+            if ($ec -eq 0) {
                 $progress.Ok++
             } else {
                 $progress.Fail++
                 $progress.FailedNames += $pkg.Name
+                if ($ec -eq -1978334969) {
+                    $progress.NeedsAdmin += [PSCustomObject]@{ Id = $pkg.Id; Name = $pkg.Name }
+                }
             }
         }
         $progress.Done = $true
@@ -2008,10 +2176,110 @@ function Start-BulkUpdate {
             Refresh-Installed
             $msg = Get-Text 'BulkResult.Update'    -FormatArgs @($progress.Ok, $progress.Fail)
             Set-Status $msg
+
+            # If some failed with "needs admin", offer one batched UAC retry.
+            # We skip this branch if we're already in the elevated run.
+            if (-not $Elevated -and $progress.NeedsAdmin.Count -gt 0) {
+                $names = ($progress.NeedsAdmin | ForEach-Object { $_.Name }) -join "`n  - "
+                if (Ask-Confirm (Get-Text 'Dialog.BulkNeedsAdmin' -FormatArgs @($progress.NeedsAdmin.Count, $names))) {
+                    # Single UAC prompt: launch one elevated winget per package via
+                    # a runspace; Windows merges them since they're spawned in quick
+                    # succession from the elevated parent of `runas`. Simpler approach:
+                    # spawn one elevated cmd that runs winget for each package in sequence.
+                    Set-Status (Get-Text 'Status.RetryingElevated') $true
+                    $Window.IsEnabled = $false
+                    Start-ElevatedWinGetBatch -PackageIds ($progress.NeedsAdmin | ForEach-Object { $_.Id }) -Operation 'upgrade' -OnDone {
+                        param($okCount, $failCount, $cancelled)
+                        $Window.IsEnabled = $true
+                        Refresh-Updates
+                        Refresh-Installed
+                        if ($cancelled) {
+                            Set-Status (Get-Text 'Status.UpdateCancelled')
+                        } else {
+                            Set-Status (Get-Text 'BulkResult.Update' -FormatArgs @($okCount, $failCount))
+                        }
+                    }
+                    return
+                }
+            }
+
             if ($progress.Fail -gt 0) {
                 $failed = $progress.FailedNames -join ", "
-                Show-Info "$msg`n`nMislukt: $failed"
+                Show-Info (Get-Text 'Dialog.SomeFailed' -FormatArgs @($msg, $failed))
             }
+        }
+    }.GetNewClosure())
+    $timer.Start()
+}
+
+# Run a list of package IDs through one elevated winget batch (one UAC prompt).
+# Uses cmd.exe so we can chain multiple `winget upgrade` calls in one elevated session.
+function Start-ElevatedWinGetBatch {
+    param(
+        [Parameter(Mandatory)][string[]]$PackageIds,
+        [ValidateSet('upgrade','uninstall')][string]$Operation = 'upgrade',
+        [Parameter(Mandatory)][scriptblock]$OnDone   # ($okCount, $failCount, $cancelled) on UI thread
+    )
+
+    if (-not $PackageIds -or $PackageIds.Count -eq 0) {
+        & $OnDone 0 0 $false; return
+    }
+
+    # Each line writes its exit code to a marker file, so we can count successes after.
+    $resultFile = [System.IO.Path]::GetTempFileName()
+    $opArgs = if ($Operation -eq 'upgrade') {
+        '--exact --silent --accept-source-agreements --accept-package-agreements --disable-interactivity'
+    } else {
+        '--exact --silent --disable-interactivity'
+    }
+    # Build a single cmd-line that runs all the winget commands and logs results.
+    # Each line appends "OK <id>" or "FAIL <id> <exitcode>" to $resultFile.
+    $lines = foreach ($id in $PackageIds) {
+        # Note: cmd's %errorlevel% expands at runtime
+        "winget $Operation --id `"$id`" $opArgs && echo OK $id>>`"$resultFile`" || echo FAIL $id %errorlevel%>>`"$resultFile`""
+    }
+    $cmdLine = '/d /c "MODE CON: COLS=250 LINES=3000 >nul 2>&1 & ' + ($lines -join ' & ') + '"'
+
+    $rs = [runspacefactory]::CreateRunspace()
+    $rs.ApartmentState = 'STA'
+    $rs.Open()
+    $ps = [powershell]::Create()
+    $ps.Runspace = $rs
+    [void]$ps.AddScript({
+        param($cmd, $marker)
+        try {
+            $p = Start-Process -FilePath 'cmd.exe' -ArgumentList $cmd `
+                  -Verb RunAs -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+            return [PSCustomObject]@{ Cancelled = $false; ExitCode = $p.ExitCode }
+        } catch {
+            # User cancelled UAC
+            return [PSCustomObject]@{ Cancelled = $true; ExitCode = 1223 }
+        }
+    }).AddArgument($cmdLine).AddArgument($resultFile)
+    # Make UAC consent dialog show on top
+    Prepare-UacForeground
+    $handle = $ps.BeginInvoke()
+
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [TimeSpan]::FromMilliseconds(500)
+    $timer.Add_Tick({
+        if ($handle.IsCompleted) {
+            $timer.Stop()
+            $result = $null
+            try { $result = $ps.EndInvoke($handle) | Select-Object -First 1 } catch {}
+            $ps.Dispose(); $rs.Dispose()
+            $okCount = 0; $failCount = 0
+            $cancelled = if ($result) { $result.Cancelled } else { $true }
+            if (Test-Path $resultFile) {
+                foreach ($l in Get-Content $resultFile) {
+                    if ($l -match '^OK ')   { $okCount++ }
+                    if ($l -match '^FAIL ') { $failCount++ }
+                }
+                Remove-Item $resultFile -Force -ErrorAction SilentlyContinue
+            }
+            # Refocus our window after elevated batch completes
+            Restore-AppForeground
+            try { & $OnDone $okCount $failCount $cancelled } catch { Write-Log "Batch OnDone error: $_" -Level ERROR -Source GUI }
         }
     }.GetNewClosure())
     $timer.Start()

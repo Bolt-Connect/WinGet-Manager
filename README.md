@@ -23,7 +23,7 @@ Lightweight GUI for Windows Package Manager (`winget`) with dark/light theme and
 
 ## 📸 Screenshot
 
-![WinGet Manager v0.3.0 — Installed tab in dark mode](assets/screenshots/v0.3-installed-dark.png)
+![WinGet Manager v0.3 — Installed tab in dark mode](assets/screenshots/v0.3-installed-dark.png)
 
 *Dark mode, Installed tab — package list with status pills, source column (winget / msstore / local), and multi-select bulk actions.*
 
@@ -113,7 +113,7 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-### 🧪 v0.3.0 (current public beta)
+### 🧪 v0.3.1 (current public beta)
 - [x] Dark / Light / Auto theme (follows Windows system preference)
 - [x] Async UI with live progress feedback
 - [x] Auto-detect and close apps blocking updates
@@ -132,8 +132,11 @@ installer/             Inno Setup script
 - [x] Installed tab sorted: updatable packages first
 - [x] App icon, header logo and palette match the website (GitHub style, blue `#2f81f7` accent)
 - [x] Minimal tab styling (transparent, underline only for active) and clean DataGrid without borders
-- [x] **i18n infrastructure** — English + Dutch translations (~150 keys) with auto-detect and Settings dropdown
+- [x] **i18n infrastructure** — English + Dutch translations (~250 keys) with auto-detect and Settings dropdown
 - [x] **Source column derivation** — fills `winget` / `msstore` / `local` based on package ID prefix
+- [x] **Automatic UAC elevation** — single confirm dialog → one UAC prompt → re-run failed packages with admin rights (works for single update, bulk update and bulk uninstall)
+- [x] **Wide-console winget wrapper** — invokes winget via `cmd /c MODE CON: COLS=250` so long package IDs (`Microsoft.VCRedist.2015+.x86`) no longer truncate in narrow output
+- [x] **Honest "Up-to-date" status** — `local` (ARP) packages now show `— Unknown` instead of misleadingly claiming up-to-date status
 
 ### 🚧 v0.4.0 — UX polish
 - [ ] System tray icon (minimize to tray, background update check)

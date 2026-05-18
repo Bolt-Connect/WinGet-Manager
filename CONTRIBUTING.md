@@ -84,7 +84,7 @@ cd WinGet-Manager
 
 ```powershell
 winget install JRSoftware.InnoSetup
-.\Build-Installer.ps1 -Version 0.3.0     # output: release\WinGetManager-Setup-0.3.0.exe
+.\Build-Installer.ps1 -Version 0.3.1     # output: release\WinGetManager-Setup-0.3.1.exe
 ```
 
 ### Regenerating the icon

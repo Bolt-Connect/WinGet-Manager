@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 
 $Script:WinGetExe = 'winget'
-$Script:AppVersion = '0.3.0'
+$Script:AppVersion = '0.3.1'
 
 # ---------------------------------------------------------------------------
 # Initialisatie
@@ -53,10 +53,33 @@ function Invoke-WinGet {
         return [PSCustomObject]@{ ExitCode = $process.ExitCode; Output = @() }
     }
 
-    $output = & $Script:WinGetExe @allArgs 2>&1
-    $ec     = $LASTEXITCODE
+    # Invoke winget through cmd.exe with MODE 250 to force wide column output.
+    # In PS2EXE -NoConsole mode there's no parent console, so winget would
+    # truncate long IDs like 'Microsoft.VCRedist.2015+.x86'. Wrapping in
+    # `cmd /c "MODE CON: COLS=250 LINES=3000 & winget ..."` gives winget a
+    # hidden console with wide buffer, no truncation.
+    $tmpOut = [System.IO.Path]::GetTempFileName()
+    try {
+        # Quote each arg that contains spaces (winget IDs don't, but safety)
+        $quoted = foreach ($a in $allArgs) {
+            if ($a -match '\s') { '"' + $a + '"' } else { "$a" }
+        }
+        $wingetCmd = "$Script:WinGetExe " + ($quoted -join ' ')
+        # MODE: 250 cols, 3000 lines. Redirect output to temp file for capture.
+        $cmdLine = "/d /c `"MODE CON: COLS=250 LINES=3000 >nul 2>&1 & $wingetCmd > `"$tmpOut`" 2>&1`""
+        $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $cmdLine `
+                  -WindowStyle Hidden -Wait -PassThru
+        $ec = $proc.ExitCode
+        $output = if (Test-Path $tmpOut) { Get-Content $tmpOut -Encoding UTF8 } else { @() }
+    } catch {
+        # Fallback to direct invocation
+        $output = & $Script:WinGetExe @allArgs 2>&1
+        $ec     = $LASTEXITCODE
+    } finally {
+        Remove-Item $tmpOut -Force -ErrorAction SilentlyContinue
+    }
 
-    if ($ec -ne 0 -and $ec -ne -1978335212) {   # -1978335212 = geen updates beschikbaar
+    if ($ec -ne 0 -and $ec -ne -1978335212) {   # -1978335212 = no updates available
         Write-Log "WinGet exitcode $ec for: $allArgs" -Level WARN -Source WinGetCore
     }
 
@@ -75,10 +98,10 @@ function Search-WinGetPackage {
     )
 
     Write-Log "Searching for: $Query" -Source WinGetCore
-    $args = @('search', $Query, '--count', $Count)
-    if ($Source) { $args += @('--source', $Source) }
+    $cmdArgs = @('search', $Query, '--count', $Count)
+    if ($Source) { $cmdArgs += @('--source', $Source) }
 
-    $result = Invoke-WinGet -Arguments $args
+    $result = Invoke-WinGet -Arguments $cmdArgs
     return Parse-PackageText $result.Output
 }
 
@@ -90,10 +113,10 @@ function Get-WinGetInstalled {
     param([string]$Source)
 
     Write-Log "Fetching installed packages" -Source WinGetCore
-    $args = @('list')
-    if ($Source) { $args += @('--source', $Source) }
+    $cmdArgs = @('list')
+    if ($Source) { $cmdArgs += @('--source', $Source) }
 
-    $result = Invoke-WinGet -Arguments $args
+    $result = Invoke-WinGet -Arguments $cmdArgs
     return Parse-PackageText $result.Output
 }
 
@@ -121,12 +144,14 @@ function Install-WinGetPackage {
     )
 
     Write-Log "Installing: $Id $(if($Version){"v$Version"})" -Source WinGetCore
-    $args = @('install', '--id', $Id, '--exact', '--scope', $Scope)
-    if ($Version) { $args += @('--version', $Version) }
-    if ($Silent)  { $args += '--silent' }
-    $args += '--accept-package-agreements'
+    # Note: $args is a PowerShell automatic variable — never use it as a user variable
+    # inside script-scope or scriptblocks where PS may reset it.
+    $cmdArgs = @('install', '--id', $Id, '--exact', '--scope', $Scope)
+    if ($Version) { $cmdArgs += @('--version', $Version) }
+    if ($Silent)  { $cmdArgs += '--silent' }
+    $cmdArgs += '--accept-package-agreements'
 
-    $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
+    $result = Invoke-WinGet -Arguments $cmdArgs -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
 
     Write-Log "Installation $Id $(if($ok){'succeeded'}else{"failed (code $($result.ExitCode))"})" `
@@ -147,10 +172,10 @@ function Uninstall-WinGetPackage {
     )
 
     Write-Log "Uninstalling: $Id" -Source WinGetCore
-    $args = @('uninstall', '--id', $Id, '--exact', '--scope', $Scope)
-    if ($Silent) { $args += '--silent' }
+    $cmdArgs = @('uninstall', '--id', $Id, '--exact', '--scope', $Scope)
+    if ($Silent) { $cmdArgs += '--silent' }
 
-    $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
+    $result = Invoke-WinGet -Arguments $cmdArgs -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
 
     Write-Log "Uninstall $Id $(if($ok){'succeeded'}else{"failed (code $($result.ExitCode))"})" `
@@ -170,10 +195,10 @@ function Update-WinGetPackage {
     )
 
     Write-Log "Updating: $Id" -Source WinGetCore
-    $args = @('upgrade', '--id', $Id, '--exact', '--accept-package-agreements')
-    if ($Silent) { $args += '--silent' }
+    $cmdArgs = @('upgrade', '--id', $Id, '--exact', '--accept-package-agreements')
+    if ($Silent) { $cmdArgs += '--silent' }
 
-    $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
+    $result = Invoke-WinGet -Arguments $cmdArgs -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
 
     Write-Log "Update $Id $(if($ok){'succeeded'}else{"failed (code $($result.ExitCode))"})" `
@@ -243,10 +268,10 @@ function Import-WinGetPackages {
     )
 
     Write-Log "Importing from: $InputPath" -Source WinGetCore
-    $args = @('import', '--import-file', $InputPath, '--accept-package-agreements')
-    if ($IgnoreUnavailable) { $args += '--ignore-unavailable' }
+    $cmdArgs = @('import', '--import-file', $InputPath, '--accept-package-agreements')
+    if ($IgnoreUnavailable) { $cmdArgs += '--ignore-unavailable' }
 
-    $result = Invoke-WinGet -Arguments $args -Elevated:$Elevated
+    $result = Invoke-WinGet -Arguments $cmdArgs -Elevated:$Elevated
     $ok     = $result.ExitCode -eq 0
     Write-Log "Import $(if($ok){'succeeded'}else{'failed'})" -Level $(if($ok){'INFO'}else{'ERROR'}) -Source WinGetCore
     return $ok
@@ -258,8 +283,9 @@ function Import-WinGetPackages {
 
 function Get-WinGetSources {
     Write-Log "Fetching sources" -Source WinGetCore
-    $result = Invoke-WinGet -Arguments @('source', 'list') -UseJson
-    return Parse-SourceJson $result.Output
+    # Note: `winget source list` does not support --output json, so we parse text.
+    $result = Invoke-WinGet -Arguments @('source', 'list')
+    return Parse-SourceText $result.Output
 }
 
 function Add-WinGetSource {
@@ -585,7 +611,11 @@ function Parse-PackageText {
 
             switch -Wildcard ($col.Name) {
                 'Name'      { $obj.Name             = $val }
-                'Id'        { $obj.Id               = $val }
+                'Id'        {
+                    # Strip winget legend markers (leading ᵃ ᵇ ᵈ etc. — superscript
+                    # letters that flag special packages like multi-installed VCRedist)
+                    $obj.Id = ($val -replace '^[^A-Za-z0-9{]+', '').Trim()
+                }
                 'Version'   { $obj.Version          = $val }
                 'Available' { $obj.AvailableVersion = $val }
                 'Source'    { $obj.Source           = $val }
@@ -600,23 +630,70 @@ function Parse-PackageText {
     return $results
 }
 
-function Parse-SourceJson {
+function Parse-SourceText {
+    <#
+    .SYNOPSIS
+        Parses the text output of `winget source list`.
+    .DESCRIPTION
+        Output format (winget 1.x):
+            Name        Argument                                           Type
+            -------------------------------------------------------------------
+            winget      https://cdn.winget.microsoft.com/cache             Microsoft.PreIndexed.Package
+            msstore     https://storeedgefd.dsx.mp.microsoft.com/v9.0      Microsoft.Rest
+    #>
     param([object[]]$RawOutput)
 
-    $json = ($RawOutput | Out-String).Trim()
-    try {
-        $data = $json | ConvertFrom-Json
-        return @($data) | ForEach-Object {
-            $item = $_
-            [PSCustomObject]@{
-                Name = if ($item.Name)     { $item.Name }     else { '' }
-                Url  = if ($item.Argument) { $item.Argument } elseif ($item.Url) { $item.Url } else { '' }
-                Type = if ($item.Type)     { $item.Type }     else { '' }
+    if (-not $RawOutput) { return @() }
+
+    $textLines = @()
+    foreach ($l in $RawOutput) {
+        if ($null -ne $l) { $textLines += $l.ToString() }
+    }
+
+    # Find separator line (dashes/unicode dashes)
+    $separatorIdx = -1
+    for ($i = 1; $i -lt $textLines.Count; $i++) {
+        if ($textLines[$i] -match '^[-─]{3,}\s*$') { $separatorIdx = $i; break }
+    }
+    if ($separatorIdx -lt 1) { return @() }
+
+    $headerLine = $textLines[$separatorIdx - 1]
+    $columns = @()
+    $regex   = [regex]'\S(?:[^ ]| (?! ))*'
+    foreach ($m in $regex.Matches($headerLine)) {
+        $columns += [PSCustomObject]@{
+            Name  = $m.Value.Trim()
+            Start = $m.Index
+            End   = $m.Index + $m.Length
+        }
+    }
+    if ($columns.Count -eq 0) { return @() }
+
+    for ($i = 0; $i -lt $columns.Count - 1; $i++) {
+        $columns[$i].End = $columns[$i + 1].Start
+    }
+    $columns[-1].End = 9999
+
+    $results = @()
+    for ($i = $separatorIdx + 1; $i -lt $textLines.Count; $i++) {
+        $line = $textLines[$i]
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+
+        $obj = [PSCustomObject]@{ Name = ''; Url = ''; Type = '' }
+
+        foreach ($col in $columns) {
+            if ($col.Start -ge $line.Length) { continue }
+            $end = [Math]::Min($col.End, $line.Length)
+            $val = $line.Substring($col.Start, $end - $col.Start).Trim()
+            switch -Wildcard ($col.Name) {
+                'Name'     { $obj.Name = $val }
+                'Argument' { $obj.Url  = $val }
+                'Type'     { $obj.Type = $val }
             }
         }
-    } catch {
-        return @()
+        if ($obj.Name) { $results += $obj }
     }
+    return $results
 }
 
 Export-ModuleMember -Function `

@@ -39,7 +39,7 @@ $Script:Strings = @{
         'Tab.ImportExport'        = '📂  Import/Export'
         'Tab.Sources'             = '🔗  Bronnen'
         'Tab.Logs'                = '📋  Logs'
-        'Tab.Settings'            = '⚙  Instellingen'
+        'Tab.Settings'            = 'Instellingen'
 
         # --- Knoppen (algemeen) ---
         'Btn.Search'              = '🔍 Zoeken'
@@ -84,6 +84,7 @@ $Script:Strings = @{
         # --- Statuslabels ---
         'Status.Ready'            = 'Gereed'
         'Status.UpToDate'         = 'Up-to-date'
+        'Status.Unknown'          = '— Onbekend'
         'Status.UpdateAvailable'  = '↑ Update'
         'Status.UpdatesFound'     = '{0} update(s) gevonden'
         'Status.InstalledCount'   = '{0} packages, {1} updatebaar'
@@ -122,6 +123,12 @@ $Script:Strings = @{
         'Status.UpdateCancelled'  = 'Update geannuleerd'
         'Status.UpToDateShort'    = 'Up-to-date'
 
+        # --- Dialog titels (messagebox titlebars) ---
+        'Dialog.Title.Info'       = 'Info'
+        'Dialog.Title.Error'      = 'Fout'
+        'Dialog.Title.Confirm'    = 'Bevestig'
+        'Dialog.Title.Details'    = 'Package-details'
+
         # --- Dialog teksten ---
         'Dialog.ConfirmInstall'   = 'Installeer ''{0}'' ({1})?'
         'Dialog.InstallSuccess'   = '''{0}'' succesvol geïnstalleerd.'
@@ -137,6 +144,7 @@ Processen sluiten en opnieuw proberen?'
 
 Mislukt: {1}'
         'Dialog.NoUpdatesForSelection' = 'Geen geselecteerde packages hebben een update beschikbaar.'
+        'Dialog.ConfirmUpdateSinglePkg' = 'Update ''{0}'' naar v{1}?'
         'Dialog.ConfirmUpdateMultiple' = '{0} packages updaten?
 
 {1}'
@@ -145,7 +153,15 @@ Mislukt: {1}'
   - {1}
 
 Processen sluiten en opnieuw proberen?'
-        'Dialog.RequiresAdmin'    = '{0} vereist administrator-rechten. Start WinGetManager als admin.'
+        'Dialog.RequiresAdmin'    = '{0} vereist administrator-rechten.
+
+Nu opnieuw proberen met admin-rechten? (Windows toont een UAC-prompt.)'
+        'Dialog.BulkNeedsAdmin'   = '{0} package(s) zijn mislukt omdat ze administrator-rechten vereisen:
+
+  - {1}
+
+Nu opnieuw proberen met admin-rechten? (Windows toont één UAC-prompt voor alle.)'
+        'Status.RetryingElevated' = 'Opnieuw proberen met admin-rechten...'
         'Dialog.UpdateFailedDetailed' = 'Update van {0} mislukt: {1}'
         'Dialog.NoUpdatesAvailable' = 'Geen updates beschikbaar.'
         'Dialog.ConfirmUpdateAll' = 'Alle {0} packages updaten?'
@@ -249,6 +265,7 @@ Bron:    {4}'
         'Sources.IntroDefault'    = 'Standaard staan er twee:'
         'Sources.WingetDesc'      = ' — Microsofts officiele community-repo (~6000 apps zoals Firefox, Chrome, VSCode)'
         'Sources.MsstoreDesc'     = ' — Microsoft Store apps (Spotify, WhatsApp, Netflix, etc.)'
+        'Sources.LocalDesc'       = ' — niet echt een bron; verschijnt in de BRON-kolom voor apps die buiten WinGet zijn geïnstalleerd (bijv. via .exe installer of MSI). WinGet kan deze niet updaten of verwijderen via deze GUI.'
         'Sources.Outro'           = 'Hier kun je een eigen bron toevoegen (bijvoorbeeld een corporate-repo), bestaande bronnen verwijderen, of resetten naar de standaard.'
 
         # --- Config warnings ---
@@ -364,7 +381,7 @@ Nu downloaden en bijwerken? De app wordt automatisch herstart.'
         'Tab.ImportExport'        = '📂  Import/Export'
         'Tab.Sources'             = '🔗  Sources'
         'Tab.Logs'                = '📋  Logs'
-        'Tab.Settings'            = '⚙  Settings'
+        'Tab.Settings'            = 'Settings'
 
         # --- Buttons (general) ---
         'Btn.Search'              = '🔍 Search'
@@ -409,6 +426,7 @@ Nu downloaden en bijwerken? De app wordt automatisch herstart.'
         # --- Status labels ---
         'Status.Ready'            = 'Ready'
         'Status.UpToDate'         = 'Up-to-date'
+        'Status.Unknown'          = '— Unknown'
         'Status.UpdateAvailable'  = '↑ Update'
         'Status.UpdatesFound'     = '{0} update(s) found'
         'Status.InstalledCount'   = '{0} packages, {1} updatable'
@@ -447,6 +465,12 @@ Nu downloaden en bijwerken? De app wordt automatisch herstart.'
         'Status.UpdateCancelled'  = 'Update cancelled'
         'Status.UpToDateShort'    = 'Up-to-date'
 
+        # --- Dialog titles (messagebox titlebars) ---
+        'Dialog.Title.Info'       = 'Info'
+        'Dialog.Title.Error'      = 'Error'
+        'Dialog.Title.Confirm'    = 'Confirm'
+        'Dialog.Title.Details'    = 'Package details'
+
         # --- Dialog texts ---
         'Dialog.ConfirmInstall'   = 'Install ''{0}'' ({1})?'
         'Dialog.InstallSuccess'   = '''{0}'' installed successfully.'
@@ -462,6 +486,7 @@ Close processes and retry?'
 
 Failed: {1}'
         'Dialog.NoUpdatesForSelection' = 'None of the selected packages have an update available.'
+        'Dialog.ConfirmUpdateSinglePkg' = 'Update ''{0}'' to v{1}?'
         'Dialog.ConfirmUpdateMultiple' = 'Update {0} packages?
 
 {1}'
@@ -470,7 +495,15 @@ Failed: {1}'
   - {1}
 
 Close processes and retry?'
-        'Dialog.RequiresAdmin'    = '{0} requires administrator rights. Start WinGetManager as admin.'
+        'Dialog.RequiresAdmin'    = '{0} requires administrator rights.
+
+Retry now with admin rights? (Windows will show a UAC prompt.)'
+        'Dialog.BulkNeedsAdmin'   = '{0} package(s) failed because they require administrator rights:
+
+  - {1}
+
+Retry these with admin rights now? (Windows will show one UAC prompt for all.)'
+        'Status.RetryingElevated' = 'Retrying with admin rights...'
         'Dialog.UpdateFailedDetailed' = 'Update of {0} failed: {1}'
         'Dialog.NoUpdatesAvailable' = 'No updates available.'
         'Dialog.ConfirmUpdateAll' = 'Update all {0} packages?'
@@ -574,6 +607,7 @@ Source:    {4}'
         'Sources.IntroDefault'    = 'There are two defaults:'
         'Sources.WingetDesc'      = ' — Microsoft''s official community repo (~6000 apps like Firefox, Chrome, VSCode)'
         'Sources.MsstoreDesc'     = ' — Microsoft Store apps (Spotify, WhatsApp, Netflix, etc.)'
+        'Sources.LocalDesc'       = ' — not actually a source; shows in the SOURCE column for apps installed outside WinGet (e.g. via .exe installer or MSI). WinGet can''t update or remove these via this GUI.'
         'Sources.Outro'           = 'Here you can add your own source (e.g. a corporate repo), remove existing sources, or reset to defaults.'
 
         # --- Config warnings ---
@@ -738,7 +772,10 @@ function Get-Text {
         return "[$Key]"
     }
 
-    if ($FormatArgs -and $FormatArgs.Count -gt 0) {
+    # NB: don't use `if ($FormatArgs -and ...)` — `@(0) -and ...` evaluates to
+    # $false in PowerShell because a single-element array unwraps to the scalar
+    # 0, which is falsy. Check $null and Count explicitly instead.
+    if ($null -ne $FormatArgs -and $FormatArgs.Count -gt 0) {
         try { $text = [string]::Format($text, $FormatArgs) } catch {}
     }
     return $text
