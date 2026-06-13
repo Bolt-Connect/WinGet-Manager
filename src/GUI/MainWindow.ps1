@@ -2558,6 +2558,22 @@ $BtnSelfUpdate.Add_Click({
         if ($result.Updated) {
             Show-Info (Get-Text 'Dialog.AppUpdateInstalled' -FormatArgs @($result.Latest))
             $Window.Close()
+        } elseif ($result.Reason -eq 'requires_admin') {
+            # System-wide install: we can't write to Program Files without admin.
+            # Offer to open the download page so user can run the new Setup.exe manually.
+            $downloadUrl = if ($result.SetupUrl) { $result.SetupUrl } else { $result.ReleaseUrl }
+            $msg = Get-Text 'Dialog.UpdateRequiresAdmin' -FormatArgs @($result.Latest)
+            $answer = [System.Windows.MessageBox]::Show($msg, (Get-Text 'Dialog.Title.Info'), 'YesNo', 'Information')
+            if ($answer -eq 'Yes' -and $downloadUrl) {
+                # Defense-in-depth: Start-Process executes any string, so confirm the URL
+                # is a trusted HTTPS github.com link before handing it to the shell.
+                if (Test-TrustedUpdateUrl $downloadUrl) {
+                    try { Start-Process $downloadUrl } catch { Write-Log "Failed to open URL: $_" -Level WARN -Source GUI }
+                } else {
+                    Write-Log "Refused to open untrusted update URL: $downloadUrl" -Level WARN -Source GUI
+                }
+            }
+            Set-Status (Get-Text 'Status.UpdateAvailableHint' -FormatArgs @($result.Latest))
         } else {
             $reasonMsg = switch ($result.Reason) {
                 'up_to_date'       { Get-Text 'Update.UpToDate' }

@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-13
+
+### Changed
+- **Installer default is now system-wide** (`Install for all users (recommended)`). WinGet Manager is a system-management tool — WinGet itself is system-wide, Task Scheduler auto-update entries apply to all users, and packages installed with `--scope machine` work for everyone. The per-user install remains available as a fallback in the install-mode dialog (`Install for me only`) for users without admin rights. Existing per-user installs from v0.3.1 keep working via self-update and don't need to be re-installed.
+- **Installer always shows the language picker at start** — added `ShowLanguageDialog=yes` so every user gets an explicit English/Dutch choice when launching `WinGetManager-Setup-0.3.2.exe`, regardless of system locale. The dropdown defaults to the system locale (Dutch on Dutch Windows, English elsewhere) so most users can just click through. Portable users skip this entirely — the app itself keeps auto-detecting language via `CurrentUICulture` on first launch.
+
+### Added
+- **Friendly self-update message when running from Program Files** — system-wide installs in `C:\Program Files\WinGetManager\` cannot self-update without admin rights. Instead of failing silently, the app now detects this case and offers to open the download page so the user can fetch the new Setup.exe manually (it links straight to the `Setup.exe` release asset when available, otherwise the release page). Detection probes the install directory for write permission, so unusual setups (read-only Program Files, locked-down kiosks) are also handled correctly.
+
+### Security
+- **Self-update download links are validated before opening** — the new "download Setup.exe manually" flow passes its URL through `Test-TrustedUpdateUrl` (HTTPS + `github.com`/`objects.githubusercontent.com` allow-list) before handing it to `Start-Process`, so a tampered GitHub API response cannot cause the shell to launch an arbitrary path instead of a browser.
+
+### Fixed
+- **`OrderedDictionary does not contain a method named 'Clone'` crash on fresh installs** — `Config.psm1` used `$Defaults.Clone()` in both the catch branch and the no-settings.json branch. `[ordered]@{}` returns an `OrderedDictionary`, which does NOT have a `Clone()` method. This crash was latent since at least v0.2.x but was never triggered because settings.json always existed in our test scenarios. Replaced with a `Copy-OrderedDict` helper that iterates keys and copies values into a fresh ordered dictionary. **Important for v0.3.2** because this code path is hit by every fresh install (portable users who run the EXE without any prior settings.json).
+- **Set-Status fallback for new `requires_admin` reason code** — the Self-update flow now sets the status bar to "v{0} available - click 'Update app' above" hint after the user has dismissed the admin dialog, instead of stale "Downloading..." text.
+
+---
+
 ## [0.3.1] - 2026-05-18
 
 ### Added
@@ -202,7 +220,8 @@ First public release.
 - Smart App Control (Windows 11) blocks running the exe — disabling is a one-way action. Will be resolved once the app is distributed via Microsoft Store.
 - SmartScreen shows an "Unknown publisher" warning on first launch (click *More info* → *Run anyway*). Will be resolved later via SignPath or Microsoft Store distribution.
 
-[Unreleased]: https://github.com/Bolt-Connect/WinGet-Manager/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/Bolt-Connect/WinGet-Manager/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.3.1
 [0.3.0]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.3.0
 [0.2.5]: https://github.com/Bolt-Connect/WinGet-Manager/releases/tag/v0.2.5

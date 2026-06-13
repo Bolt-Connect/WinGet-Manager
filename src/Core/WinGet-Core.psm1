@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 
 $Script:WinGetExe = 'winget'
-$Script:AppVersion = '0.3.1'
+$Script:AppVersion = '0.3.2'
 
 # ---------------------------------------------------------------------------
 # Initialisatie
@@ -420,6 +420,40 @@ function Update-App {
         return [PSCustomObject]@{ Updated = $false; Reason = 'not_exe_runtime'; Latest = $info.Version }
     }
 
+    # Bail out gracefully when running from a system-wide install location.
+    # Writing to C:\Program Files\... requires admin rights, and silently failing
+    # makes the user think the update button is broken. Returning 'requires_admin'
+    # lets the GUI show a friendly "Download Setup.exe manually" message with a link.
+    $pf      = [Environment]::GetFolderPath('ProgramFiles')
+    $pfX86   = [Environment]::GetFolderPath('ProgramFilesX86')
+    $exeDir  = [System.IO.Path]::GetDirectoryName($ExePath)
+    $inSysPF = ($pf    -and $exeDir.StartsWith($pf,    [StringComparison]::OrdinalIgnoreCase)) -or `
+               ($pfX86 -and $exeDir.StartsWith($pfX86, [StringComparison]::OrdinalIgnoreCase))
+    if ($inSysPF) {
+        # Try to write a probe file to confirm we really cannot write here.
+        # Some setups (e.g. very permissive folders) might still work, so we only
+        # block when the write actually fails.
+        $probe = Join-Path $exeDir ".wgm-update-probe-$([guid]::NewGuid().Guid.Substring(0,8))"
+        try {
+            [System.IO.File]::WriteAllBytes($probe, [byte[]]@(0))
+            Remove-Item $probe -Force -ErrorAction SilentlyContinue
+            Write-Log "ExE is in Program Files but folder is writable; continuing self-update" -Source WinGetCore
+        } catch {
+            Write-Log "Self-update blocked: $ExePath is in Program Files and not writable" -Level WARN -Source WinGetCore
+            # Find the setup installer asset so the GUI can offer a direct download
+            $setupAsset = $info.Assets | Where-Object { $_.Name -like '*Setup*.exe' } | Select-Object -First 1
+            $setupUrl   = if ($setupAsset) { $setupAsset.Url } else { $info.Url }
+            return [PSCustomObject]@{
+                Updated  = $false
+                Reason   = 'requires_admin'
+                Current  = $Script:AppVersion
+                Latest   = $info.Version
+                SetupUrl = $setupUrl
+                ReleaseUrl = $info.Url
+            }
+        }
+    }
+
     # Download naar tijdelijk bestand naast huidige exe
     $tempExe = "$ExePath.new"
     try {
@@ -705,6 +739,7 @@ Export-ModuleMember -Function `
     Export-WinGetPackages, Import-WinGetPackages, `
     Get-WinGetSources, Add-WinGetSource, Remove-WinGetSource, Reset-WinGetSources, `
     Get-AppVersion, Get-LatestAppVersion, Update-App, `
+    Test-TrustedUpdateUrl, `
     Test-IsAdmin
 
 # SIG # Begin signature block

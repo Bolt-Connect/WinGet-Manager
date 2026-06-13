@@ -113,7 +113,7 @@ installer/             Inno Setup script
 
 ## Roadmap
 
-### 🧪 v0.3.1 (current public beta)
+### 🧪 v0.3.2 (current public beta)
 - [x] Dark / Light / Auto theme (follows Windows system preference)
 - [x] Async UI with live progress feedback
 - [x] Auto-detect and close apps blocking updates
@@ -137,6 +137,9 @@ installer/             Inno Setup script
 - [x] **Automatic UAC elevation** — single confirm dialog → one UAC prompt → re-run failed packages with admin rights (works for single update, bulk update and bulk uninstall)
 - [x] **Wide-console winget wrapper** — invokes winget via `cmd /c MODE CON: COLS=250` so long package IDs (`Microsoft.VCRedist.2015+.x86`) no longer truncate in narrow output
 - [x] **Honest "Up-to-date" status** — `local` (ARP) packages now show `— Unknown` instead of misleadingly claiming up-to-date status
+- [x] **System-wide installer default** — `Install for all users (recommended)` is pre-selected; per-user fallback remains for non-admin users
+- [x] **Installer language picker shown at start** — every install starts with explicit EN/NL selection, defaulted to system locale
+- [x] **Program Files detection in self-update** — friendly "download Setup.exe manually" message instead of silent failure when running from `Program Files\`
 
 ### 🚧 v0.4.0 — UX polish
 - [ ] System tray icon (minimize to tray, background update check)

@@ -196,6 +196,9 @@ Nu opnieuw proberen met admin-rechten? (Windows toont één UAC-prompt voor alle
         'Dialog.AppUpdateInstalled' = 'Update geïnstalleerd! De app wordt nu opnieuw gestart met v{0}.'
         'Dialog.AppUpdateFailed'  = 'Update mislukt: {0}'
         'Dialog.AppUpdateError'   = 'Fout bij update: {0}'
+        'Dialog.UpdateRequiresAdmin' = 'Update naar v{0} beschikbaar, maar WinGet Manager is system-wide geïnstalleerd (Program Files) en kan zichzelf niet bijwerken zonder administrator-rechten.
+
+Wilt u de download-pagina openen om de nieuwe Setup.exe handmatig te downloaden?'
         'Dialog.DontAskAgain'     = 'Niet meer vragen voor deze actie'
 
         # --- Restart-reason regels (Save Settings) ---
@@ -538,6 +541,9 @@ Retry these with admin rights now? (Windows will show one UAC prompt for all.)'
         'Dialog.AppUpdateInstalled' = 'Update installed! The app will now restart with v{0}.'
         'Dialog.AppUpdateFailed'  = 'Update failed: {0}'
         'Dialog.AppUpdateError'   = 'Error during update: {0}'
+        'Dialog.UpdateRequiresAdmin' = 'Update to v{0} available, but WinGet Manager is installed system-wide (Program Files) and cannot update itself without administrator rights.
+
+Open the download page to manually download the new Setup.exe?'
         'Dialog.DontAskAgain'     = 'Don''t ask again for this action'
 
         # --- Restart reason strings (Save Settings) ---

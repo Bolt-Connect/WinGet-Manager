@@ -44,12 +44,25 @@ function Initialize-Config {
             }
         } catch {
             Write-Warning (Get-Text 'Config.LoadFailed' -FormatArgs @($ConfigPath, $_))
-            $Script:Config = $Script:Defaults.Clone()
+            $Script:Config = Copy-OrderedDict $Script:Defaults
         }
     } else {
-        $Script:Config = $Script:Defaults.Clone()
+        $Script:Config = Copy-OrderedDict $Script:Defaults
         Save-Config
     }
+}
+
+# OrderedDictionary doesn't have .Clone() - build a fresh ordered copy by hand.
+# Using $Defaults.Clone() crashes at runtime on fresh installs (no settings.json):
+#   "Method invocation failed because [System.Collections.Specialized.OrderedDictionary]
+#    does not contain a method named 'Clone'."
+# Latent since at least v0.2.x; only surfaced in v0.3.2 testing, which finally
+# exercised the empty-config path (fresh install with no settings.json yet).
+function Copy-OrderedDict {
+    param([Parameter(Mandatory)]$Source)
+    $copy = [ordered]@{}
+    foreach ($key in $Source.Keys) { $copy[$key] = $Source[$key] }
+    return $copy
 }
 
 function Get-AppConfig {

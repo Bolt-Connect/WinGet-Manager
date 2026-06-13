@@ -37,13 +37,21 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequired=lowest
+; Default to system-wide install (matches the system-management nature of the tool -
+; WinGet itself is system-wide, and packages installed with --scope machine apply to
+; all users). Users without admin rights still get a fallback option in the dialog
+; thanks to PrivilegesRequiredOverridesAllowed=dialog.
+PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 DisableProgramGroupPage=yes
 DisableReadyPage=no
+; Always show language picker at start (regardless of system locale).
+; Users can explicitly pick English or Dutch instead of relying on auto-detect.
+ShowLanguageDialog=yes
+UsePreviousLanguage=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
